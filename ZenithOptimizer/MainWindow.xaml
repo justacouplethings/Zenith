@@ -1,0 +1,1019 @@
+<Window x:Class="ZenithOptimizer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ZenithOptimizer"
+        xmlns:vm="clr-namespace:ZenithOptimizer.ViewModels"
+        xmlns:models="clr-namespace:ZenithOptimizer.Models"
+        xmlns:services="clr-namespace:ZenithOptimizer.Services"
+        mc:Ignorable="d"
+        Title="Zenith Optimizer"
+        Height="800" Width="1180"
+        MinHeight="680" MinWidth="980"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource BackgroundBrush}"
+        Foreground="{DynamicResource TextPrimaryBrush}"
+        FontFamily="{StaticResource AppleFont}">
+
+    <Window.DataContext>
+        <vm:MainViewModel/>
+    </Window.DataContext>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <!-- 0: Header / Segmented Bar -->
+            <RowDefinition Height="Auto"/>
+            <!-- 1: Live Hardware Telemetry Bar -->
+            <RowDefinition Height="Auto"/>
+            <!-- 2: Active Tab Content Area -->
+            <RowDefinition Height="*"/>
+            <!-- 3: Busy / Progress Overlay -->
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- ==================== HEADER & SEGMENTED TABS ==================== -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource CardBrush}"
+                BorderBrush="{DynamicResource CardBorderBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="20,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <!-- Brand & Logo -->
+                    <ColumnDefinition Width="Auto"/>
+                    <!-- Segmented Tab Navigation -->
+                    <ColumnDefinition Width="*"/>
+                    <!-- Right Actions & OS Info -->
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Brand & Logo -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Placeholder Logo: Modern Apple-style geometric crest -->
+                    <Border Width="38" Height="38"
+                            CornerRadius="10"
+                            Background="{DynamicResource AccentBrush}"
+                            Margin="0,0,14,0"
+                            ClipToBounds="True">
+                        <Grid>
+                            <!-- Placeholder Vector Mark (Zenith Chevron) -->
+                            <Path x:Name="PlaceholderLogoPath"
+                                  Data="M 19,10 L 27,24 L 23,24 L 19,16 L 15,24 L 11,24 Z"
+                                  Fill="#FFFFFF"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"/>
+                            <Image x:Name="CustomLogoImage" Stretch="UniformToFill" Visibility="Collapsed"/>
+                        </Grid>
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="ZENITH" FontWeight="Bold" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <Border Background="{DynamicResource AccentBrushLight}" CornerRadius="4" Padding="6,2" Margin="8,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="PRO" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}"/>
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="Windows 10/11 Performance Suite" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,1,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Apple Segmented Navigation Pills -->
+                <Border Grid.Column="1"
+                        HorizontalAlignment="Center"
+                        Background="{DynamicResource SegmentedTabBgBrush}"
+                        CornerRadius="10"
+                        Padding="3"
+                        Margin="20,0">
+                    <StackPanel Orientation="Horizontal">
+                        <RadioButton Content="Dashboard"
+                                     GroupName="NavTabs"
+                                     IsChecked="True"
+                                     Tag="Dashboard"
+                                     Click="TabButton_Click"
+                                     Style="{StaticResource SegmentedTabStyle}"/>
+                        <RadioButton Content="Windows 11"
+                                     GroupName="NavTabs"
+                                     Tag="Win11"
+                                     Click="TabButton_Click"
+                                     Style="{StaticResource SegmentedTabStyle}"/>
+                        <RadioButton Content="Windows 10"
+                                     GroupName="NavTabs"
+                                     Tag="Win10"
+                                     Click="TabButton_Click"
+                                     Style="{StaticResource SegmentedTabStyle}"/>
+                        <RadioButton Content="Universal Tweaks"
+                                     GroupName="NavTabs"
+                                     Tag="Universal"
+                                     Click="TabButton_Click"
+                                     Style="{StaticResource SegmentedTabStyle}"/>
+                        <RadioButton Content="Debloat Apps"
+                                     GroupName="NavTabs"
+                                     Tag="Debloat"
+                                     Click="TabButton_Click"
+                                     Style="{StaticResource SegmentedTabStyle}"/>
+                        <RadioButton Content="Settings &amp; Logs"
+                                     GroupName="NavTabs"
+                                     Tag="Settings"
+                                     Click="TabButton_Click"
+                                     Style="{StaticResource SegmentedTabStyle}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Right Quick Utilities & OS Tag -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Restore Point Quick Action -->
+                    <Button Content="Restore Point"
+                            Click="CreateRestorePoint_Click"
+                            Style="{StaticResource AppleSecondaryButton}"
+                            Padding="12,6"
+                            FontSize="12"
+                            Margin="0,0,8,0"
+                            ToolTip="Create an instant Windows System Restore Point"/>
+
+                    <!-- Restart Explorer -->
+                    <Button Content="Restart Explorer"
+                            Click="RestartExplorer_Click"
+                            Style="{StaticResource AppleSecondaryButton}"
+                            Padding="12,6"
+                            FontSize="12"
+                            Margin="0,0,12,0"
+                            ToolTip="Instantly restarts File Explorer to apply UI tweaks"/>
+
+                    <!-- OS Badge -->
+                    <Border Background="{DynamicResource PillBgBrush}"
+                            CornerRadius="8"
+                            Padding="10,6">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Ellipse Width="7" Height="7" Fill="{DynamicResource SafeBadgeBrush}" Margin="0,0,6,0"/>
+                            <TextBlock Text="{Binding Metrics.OsName}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock Text=" • " FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                            <TextBlock Text="{Binding Metrics.OsBuild}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ==================== LIVE HARDWARE TELEMETRY BAR ==================== -->
+        <Border Grid.Row="1"
+                Background="{DynamicResource BackgroundBrush}"
+                Padding="20,14,20,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <!-- CPU Card -->
+                    <ColumnDefinition Width="*"/>
+                    <!-- RAM Card -->
+                    <ColumnDefinition Width="*"/>
+                    <!-- Disk & Tasks Card -->
+                    <ColumnDefinition Width="*"/>
+                    <!-- Power & Optimization Score Card -->
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- CPU Card -->
+                <Border Grid.Column="0" Style="{StaticResource MetricCardStyle}" Margin="0,0,6,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="CPU LOAD" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,4,0,6">
+                            <TextBlock Text="{Binding Metrics.CpuUsage, StringFormat={}{0:F1}}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock Text="%" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="2,8,0,0"/>
+                        </StackPanel>
+                        <ProgressBar Grid.Row="2"
+                                     Value="{Binding Metrics.CpuUsage}"
+                                     Maximum="100"
+                                     Height="4"
+                                     Style="{StaticResource MetricProgressStyle}"/>
+                    </Grid>
+                </Border>
+
+                <!-- RAM Card -->
+                <Border Grid.Column="1" Style="{StaticResource MetricCardStyle}" Margin="6,0,6,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid>
+                            <TextBlock Text="MEMORY (RAM)" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                            <TextBlock Text="{Binding Metrics.RamUsagePercent, StringFormat={}{0:F0}%}" HorizontalAlignment="Right" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        </Grid>
+                        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,4,0,6">
+                            <TextBlock Text="{Binding Metrics.RamUsedGb, StringFormat={}{0:F1}}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock Text=" / " FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="2,8,0,0"/>
+                            <TextBlock Text="{Binding Metrics.RamTotalGb, StringFormat={}{0:F1} GB}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,8,0,0"/>
+                        </StackPanel>
+                        <ProgressBar Grid.Row="2"
+                                     Value="{Binding Metrics.RamUsagePercent}"
+                                     Maximum="100"
+                                     Height="4"
+                                     Style="{StaticResource MetricProgressStyle}"/>
+                    </Grid>
+                </Border>
+
+                <!-- Disk & Tasks Card -->
+                <Border Grid.Column="2" Style="{StaticResource MetricCardStyle}" Margin="6,0,6,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid>
+                            <TextBlock Text="STORAGE &amp; PROCS" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                            <TextBlock Text="{Binding Metrics.DiskUsagePercent, StringFormat={}C: {0:F0}%}" HorizontalAlignment="Right" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        </Grid>
+                        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,4,0,6">
+                            <TextBlock Text="{Binding Metrics.ProcessCount}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock Text=" Procs • " FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" Margin="6,8,0,0"/>
+                            <TextBlock Text="{Binding Metrics.UptimeString}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,8,0,0"/>
+                        </StackPanel>
+                        <ProgressBar Grid.Row="2"
+                                     Value="{Binding Metrics.DiskUsagePercent}"
+                                     Maximum="100"
+                                     Height="4"
+                                     Style="{StaticResource MetricProgressStyle}"/>
+                    </Grid>
+                </Border>
+
+                <!-- Power & Optimization Score Card -->
+                <Border Grid.Column="3" Style="{StaticResource MetricCardStyle}" Margin="6,0,0,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid>
+                            <TextBlock Text="OPTIMIZATION HEALTH" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                            <TextBlock Text="{Binding Metrics.OptimizationScore, StringFormat={}{0}%}" HorizontalAlignment="Right" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}"/>
+                        </Grid>
+                        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,4,0,6">
+                            <TextBlock Text="{Binding Metrics.TotalAppliedTweaks}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource SafeBadgeBrush}"/>
+                            <TextBlock Text=" of " FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" Margin="4,8,0,0"/>
+                            <TextBlock Text="{Binding Metrics.TotalAvailableTweaks}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,8,0,0"/>
+                            <TextBlock Text=" Active" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" Margin="2,8,0,0"/>
+                        </StackPanel>
+                        <ProgressBar Grid.Row="2"
+                                     Value="{Binding Metrics.OptimizationScore}"
+                                     Maximum="100"
+                                     Height="4"
+                                     Style="{StaticResource MetricProgressStyle}"/>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- ==================== MAIN CONTENT TABS ==================== -->
+        <Grid Grid.Row="2" Margin="20,8,20,16">
+
+            <!-- TAB 1: DASHBOARD -->
+            <Grid Visibility="{Binding ActiveTab, Converter={StaticResource TabVisibilityConverter}, ConverterParameter=Dashboard}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+
+                        <!-- Hero Banner Card -->
+                        <Border Style="{StaticResource AppleCardStyle}" Padding="24,20" Background="{DynamicResource CardBrush}" Margin="0,0,0,16">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="High-Precision Windows Optimization" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="Fine-tune operating system responsiveness, disable intrusive telemetry, reclaim storage, and lower gaming latency using battle-tested kernel and registry configurations."
+                                               FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,6,0,0" LineHeight="18"/>
+                                </StackPanel>
+                                <Button Grid.Column="1"
+                                        Content="Check System Status"
+                                        Click="CheckStatus_Click"
+                                        Style="{StaticResource AppleSecondaryButton}"
+                                        Padding="16,10"
+                                        VerticalAlignment="Center"
+                                        Margin="16,0,0,0"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Presets Section Header -->
+                        <TextBlock Text="ONE-CLICK OPTIMIZATION PRESETS" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="4,0,0,10"/>
+
+                        <!-- 4 Presets Grid -->
+                        <Grid Margin="0,0,0,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Preset 1: Safe Default -->
+                            <Border Grid.Column="0" Style="{StaticResource AppleCardStyle}" Margin="0,0,6,0">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Background="{DynamicResource SafeBadgeBgBrush}" CornerRadius="6" Padding="6,2">
+                                            <TextBlock Text="SAFE" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource SafeBadgeBrush}"/>
+                                        </Border>
+                                        <TextBlock Text="Recommended" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="8,2,0,0"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="1" Margin="0,10,0,16">
+                                        <TextBlock Text="Safe Productivity" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                        <TextBlock Text="Disables telemetry, error reporting, bloatware autoinstall, lock screen ads, and background indexing delay. 100% stable."
+                                                   FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" LineHeight="16" Margin="0,6,0,0"/>
+                                    </StackPanel>
+                                    <Button Grid.Row="2"
+                                            Content="Load Safe Preset"
+                                            Click="PresetSafe_Click"
+                                            Style="{StaticResource AppleButton}"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Preset 2: Pro Gaming -->
+                            <Border Grid.Column="1" Style="{StaticResource AppleCardStyle}" Margin="6,0,6,0">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Background="{DynamicResource CautionBadgeBgBrush}" CornerRadius="6" Padding="6,2">
+                                            <TextBlock Text="50/50" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource CautionBadgeBrush}"/>
+                                        </Border>
+                                        <TextBlock Text="Gaming Latency" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="8,2,0,0"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="1" Margin="0,10,0,16">
+                                        <TextBlock Text="Pro Gaming &amp; Latency" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                        <TextBlock Text="Eliminates GameDVR micro-stutter, optimizes MMCSS network throttling, enforces 1:1 raw mouse input, and disables SysMain on SSDs."
+                                                   FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" LineHeight="16" Margin="0,6,0,0"/>
+                                    </StackPanel>
+                                    <Button Grid.Row="2"
+                                            Content="Load Gaming Preset"
+                                            Click="PresetGaming_Click"
+                                            Style="{StaticResource AppleButton}"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Preset 3: Maximum Strip -->
+                            <Border Grid.Column="2" Style="{StaticResource AppleCardStyle}" Margin="6,0,6,0">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Background="{DynamicResource RiskyBadgeBgBrush}" CornerRadius="6" Padding="6,2">
+                                            <TextBlock Text="RISKY" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource RiskyBadgeBrush}"/>
+                                        </Border>
+                                        <TextBlock Text="Ultra Stripped" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="8,2,0,0"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="1" Margin="0,10,0,16">
+                                        <TextBlock Text="Maximum Strip" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                        <TextBlock Text="Unlocks Ultimate Performance ACPI power scheme, locks kernel in RAM, and strips non-essential services. For high-end desktops."
+                                                   FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" LineHeight="16" Margin="0,6,0,0"/>
+                                    </StackPanel>
+                                    <Button Grid.Row="2"
+                                            Content="Load Ultra Preset"
+                                            Click="PresetUltra_Click"
+                                            Style="{StaticResource AppleButton}"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Preset 4: Revert All -->
+                            <Border Grid.Column="3" Style="{StaticResource AppleCardStyle}" Margin="6,0,0,0">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Background="{DynamicResource PillBgBrush}" CornerRadius="6" Padding="6,2">
+                                            <TextBlock Text="STOCK" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                        </Border>
+                                        <TextBlock Text="Reset" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="8,2,0,0"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="1" Margin="0,10,0,16">
+                                        <TextBlock Text="Revert to Defaults" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                        <TextBlock Text="Restores Microsoft default registry keys, enables stock telemetry and Windows default background services safely."
+                                                   FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" LineHeight="16" Margin="0,6,0,0"/>
+                                    </StackPanel>
+                                    <Button Grid.Row="2"
+                                            Content="Revert All Tweaks"
+                                            Click="RevertAll_Click"
+                                            Style="{StaticResource AppleSecondaryButton}"/>
+                                </Grid>
+                            </Border>
+                        </Grid>
+
+                        <!-- Quick Maintenance & Disk Section -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Clean Cache Card -->
+                            <Border Grid.Column="0" Style="{StaticResource AppleCardStyle}" Margin="0,0,6,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="Purge System Temp Caches &amp; Flush DNS" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                        <TextBlock Text="Safely cleans Windows Temp, User Temp, Prefetch, and flushes network DNS cache." FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                    <Button Grid.Column="1"
+                                            Content="Purge Now"
+                                            Click="CleanTemp_Click"
+                                            Style="{StaticResource AppleSecondaryButton}"
+                                            VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Disable Hibernation Card -->
+                            <Border Grid.Column="1" Style="{StaticResource AppleCardStyle}" Margin="6,0,0,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="Reclaim SSD Storage (Disable Hibernation)" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                        <TextBlock Text="Deletes hiberfil.sys to immediately free 8GB to 32GB of SSD disk space." FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                    <Button Grid.Column="1"
+                                            Content="Free Storage"
+                                            Click="FreeStorage_Click"
+                                            Style="{StaticResource AppleSecondaryButton}"
+                                            VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+
+            <!-- TAB 2, 3, 4: LIST OF OPTIMIZATIONS (Windows 11, Windows 10, Universal) -->
+            <Grid Visibility="{Binding ActiveTab, Converter={StaticResource TabVisibilityConverter}, ConverterParameter=List}">
+                <Grid.RowDefinitions>
+                    <!-- Filter and Search Bar -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- Optimizations Card List -->
+                    <RowDefinition Height="*"/>
+                    <!-- Sticky Bottom Action Bar -->
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Filter & Search Toolbar -->
+                <Border Grid.Row="0"
+                        Style="{StaticResource AppleCardStyle}"
+                        Padding="14,10"
+                        Margin="0,0,0,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <!-- Risk Filter Pills -->
+                            <ColumnDefinition Width="Auto"/>
+                            <!-- Spacer -->
+                            <ColumnDefinition Width="*"/>
+                            <!-- Search Box -->
+                            <ColumnDefinition Width="260"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Risk Badges Filter Pills -->
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Filter by Risk:" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <RadioButton Content="All"
+                                         GroupName="RiskFilter"
+                                         IsChecked="True"
+                                         Tag="All"
+                                         Click="RiskFilter_Click"
+                                         Style="{StaticResource RiskFilterPillStyle}"/>
+                            <RadioButton Content="Safe"
+                                         GroupName="RiskFilter"
+                                         Tag="Safe"
+                                         Click="RiskFilter_Click"
+                                         Style="{StaticResource RiskFilterPillStyle}"/>
+                            <RadioButton Content="50/50 Caution"
+                                         GroupName="RiskFilter"
+                                         Tag="Caution"
+                                         Click="RiskFilter_Click"
+                                         Style="{StaticResource RiskFilterPillStyle}"/>
+                            <RadioButton Content="Risky"
+                                         GroupName="RiskFilter"
+                                         Tag="Risky"
+                                         Click="RiskFilter_Click"
+                                         Style="{StaticResource RiskFilterPillStyle}"/>
+                        </StackPanel>
+
+                        <!-- Search Input Box -->
+                        <TextBox Grid.Column="2"
+                                 Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource AppleSearchBox}"
+                                 ToolTip="Search tweaks by title, keyword, or trade-off"/>
+                    </Grid>
+                </Border>
+
+                <!-- Items List -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding FilteredOptimizations}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type models:OptimizationItem}">
+                                <Border Style="{StaticResource AppleCardStyle}" Margin="0,0,0,8" Padding="16,14">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <!-- Checkbox for selection -->
+                                            <ColumnDefinition Width="Auto"/>
+                                            <!-- Title & Details -->
+                                            <ColumnDefinition Width="*"/>
+                                            <!-- Status & Quick Action -->
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Selection Checkbox -->
+                                        <CheckBox Grid.Column="0"
+                                                  IsChecked="{Binding IsSelected}"
+                                                  Style="{StaticResource AppleCheckBox}"
+                                                  VerticalAlignment="Center"
+                                                  Margin="0,0,14,0"/>
+
+                                        <!-- Title, Risk Badge, Description, and Tradeoff -->
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                                <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+
+                                                <!-- Risk Badge -->
+                                                <Border Background="{Binding Risk, Converter={StaticResource RiskToBgConverter}}"
+                                                        CornerRadius="6"
+                                                        Padding="6,2"
+                                                        Margin="10,0,0,0"
+                                                        VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding RiskBadgeText}"
+                                                               FontSize="10"
+                                                               FontWeight="Bold"
+                                                               Foreground="{Binding Risk, Converter={StaticResource RiskToColorConverter}}"/>
+                                                </Border>
+
+                                                <!-- Requires Restart Tag if any -->
+                                                <Border Background="{DynamicResource PillBgBrush}"
+                                                        CornerRadius="6"
+                                                        Padding="6,2"
+                                                        Margin="6,0,0,0"
+                                                        Visibility="{Binding RequiresRestart, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                        VerticalAlignment="Center">
+                                                    <TextBlock Text="Explorer Restart" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                                </Border>
+                                            </StackPanel>
+
+                                            <!-- Description -->
+                                            <TextBlock Text="{Binding Description}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" LineHeight="16"/>
+
+                                            <!-- Tradeoff Note -->
+                                            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                <TextBlock Text="Trade-off: " FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                                <TextBlock Text="{Binding Tradeoff}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                        </StackPanel>
+
+                                        <!-- Status Indicator and Quick Actions -->
+                                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,0,0">
+                                            <!-- Status Pill -->
+                                            <Border CornerRadius="6" Padding="8,4" Margin="0,0,10,0" VerticalAlignment="Center">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsApplied}" Value="True">
+                                                                <Setter Property="Background" Value="{DynamicResource SafeBadgeBgBrush}"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding IsApplied}" Value="False">
+                                                                <Setter Property="Background" Value="{DynamicResource PillBgBrush}"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <TextBlock Text="{Binding StatusText}" FontSize="11" FontWeight="SemiBold">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsApplied}" Value="True">
+                                                                    <Setter Property="Foreground" Value="{DynamicResource SafeBadgeBrush}"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding IsApplied}" Value="False">
+                                                                    <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </Border>
+
+                                            <!-- Apply Single Button -->
+                                            <Button Content="Apply"
+                                                    Tag="{Binding}"
+                                                    Click="ApplySingle_Click"
+                                                    Style="{StaticResource AppleSecondaryButton}"
+                                                    Padding="10,5"
+                                                    FontSize="11"
+                                                    Margin="0,0,6,0"/>
+
+                                            <!-- Revert Single Button -->
+                                            <Button Content="Revert"
+                                                    Tag="{Binding}"
+                                                    Click="RevertSingle_Click"
+                                                    Style="{StaticResource AppleSecondaryButton}"
+                                                    Padding="10,5"
+                                                    FontSize="11"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <!-- Sticky Bottom Action Bar -->
+                <Border Grid.Row="2"
+                        Background="{DynamicResource CardBrush}"
+                        BorderBrush="{DynamicResource CardBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Padding="16,12"
+                        Margin="0,12,0,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <!-- Bulk selection buttons -->
+                            <ColumnDefinition Width="Auto"/>
+                            <!-- Spacer -->
+                            <ColumnDefinition Width="*"/>
+                            <!-- Execution buttons -->
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Bulk Selection buttons -->
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Content="Select All"
+                                    Click="SelectAll_Click"
+                                    Style="{StaticResource AppleSecondaryButton}"
+                                    Padding="12,6"
+                                    Margin="0,0,8,0"/>
+                            <Button Content="Deselect All"
+                                    Click="DeselectAll_Click"
+                                    Style="{StaticResource AppleSecondaryButton}"
+                                    Padding="12,6"/>
+                        </StackPanel>
+
+                        <!-- Execution Actions -->
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Content="Revert Selected"
+                                    Click="RevertSelected_Click"
+                                    Style="{StaticResource AppleSecondaryButton}"
+                                    Padding="16,8"
+                                    Margin="0,0,10,0"/>
+                            <Button Content="Apply Selected"
+                                    Click="ApplySelected_Click"
+                                    Style="{StaticResource AppleButton}"
+                                    Padding="20,8"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- TAB 5: DEBLOAT APPS -->
+            <Grid Visibility="{Binding ActiveTab, Converter={StaticResource TabVisibilityConverter}, ConverterParameter=Debloat}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Header Banner -->
+                <Border Grid.Row="0" Style="{StaticResource AppleCardStyle}" Padding="16,12" Margin="0,0,0,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="UWP Consumer Bloatware Remover" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock Text="Removes unnecessary pre-installed Windows Store packages, promotional apps, and background sync agents." FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                        </StackPanel>
+                        <Button Grid.Column="1"
+                                Content="Clean System Temp Caches"
+                                Click="CleanTemp_Click"
+                                Style="{StaticResource AppleSecondaryButton}"
+                                VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+
+                <!-- Bloatware Items List -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding BloatwareList}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type services:BloatPackageItem}">
+                                <Border Style="{StaticResource AppleCardStyle}" Margin="0,0,0,8" Padding="16,12">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <CheckBox Grid.Column="0"
+                                                  IsChecked="{Binding IsSelected}"
+                                                  Style="{StaticResource AppleCheckBox}"
+                                                  VerticalAlignment="Center"
+                                                  Margin="0,0,14,0"/>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                            <TextBlock Text="{Binding Description}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <!-- Action Bar -->
+                <Border Grid.Row="2"
+                        Background="{DynamicResource CardBrush}"
+                        BorderBrush="{DynamicResource CardBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Padding="16,12"
+                        Margin="0,12,0,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Select packages above and click to purge for all users." FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                        <Button Grid.Column="1"
+                                Content="Purge Selected Bloatware"
+                                Click="PurgeBloatware_Click"
+                                Style="{StaticResource AppleButton}"
+                                Padding="20,8"/>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- TAB 6: SETTINGS & LOGS -->
+            <Grid Visibility="{Binding ActiveTab, Converter={StaticResource TabVisibilityConverter}, ConverterParameter=Settings}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+
+                        <!-- Themes & Appearance Card -->
+                        <Border Style="{StaticResource AppleCardStyle}" Padding="20" Margin="0,0,0,16">
+                            <StackPanel>
+                                <TextBlock Text="APPEARANCE &amp; THEMES" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}"/>
+
+                                <!-- Themes Selection -->
+                                <TextBlock Text="Interface Theme" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,12,0,8"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <RadioButton Content="Cupertino Dark"
+                                                 GroupName="ThemeGroup"
+                                                 IsChecked="True"
+                                                 Tag="CupertinoDark"
+                                                 Click="ThemeSelector_Click"
+                                                 Style="{StaticResource RiskFilterPillStyle}"/>
+                                    <RadioButton Content="Cupertino Light"
+                                                 GroupName="ThemeGroup"
+                                                 Tag="CupertinoLight"
+                                                 Click="ThemeSelector_Click"
+                                                 Style="{StaticResource RiskFilterPillStyle}"/>
+                                    <RadioButton Content="Midnight Slate"
+                                                 GroupName="ThemeGroup"
+                                                 Tag="MidnightSlate"
+                                                 Click="ThemeSelector_Click"
+                                                 Style="{StaticResource RiskFilterPillStyle}"/>
+                                    <RadioButton Content="Graphite Minimal"
+                                                 GroupName="ThemeGroup"
+                                                 Tag="GraphiteMinimal"
+                                                 Click="ThemeSelector_Click"
+                                                 Style="{StaticResource RiskFilterPillStyle}"/>
+                                </StackPanel>
+
+                                <!-- Accent Color Selection -->
+                                <TextBlock Text="Accent Highlight Color" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,16,0,8"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <RadioButton Content="Apple Blue"
+                                                 GroupName="AccentGroup"
+                                                 IsChecked="True"
+                                                 Tag="AppleBlue"
+                                                 Click="AccentSelector_Click"
+                                                 Style="{StaticResource RiskFilterPillStyle}"/>
+                                    <RadioButton Content="Cyber Emerald"
+                                                 GroupName="AccentGroup"
+                                                 Tag="EmeraldGreen"
+                                                 Click="AccentSelector_Click"
+                                                 Style="{StaticResource RiskFilterPillStyle}"/>
+                                    <RadioButton Content="Royal Violet"
+                                                 GroupName="AccentGroup"
+                                                 Tag="RoyalViolet"
+                                                 Click="AccentSelector_Click"
+                                                 Style="{StaticResource RiskFilterPillStyle}"/>
+                                    <RadioButton Content="Sunset Amber"
+                                                 GroupName="AccentGroup"
+                                                 Tag="SunsetAmber"
+                                                 Click="AccentSelector_Click"
+                                                 Style="{StaticResource RiskFilterPillStyle}"/>
+                                    <RadioButton Content="Coral Crimson"
+                                                 GroupName="AccentGroup"
+                                                 Tag="CoralCrimson"
+                                                 Click="AccentSelector_Click"
+                                                 Style="{StaticResource RiskFilterPillStyle}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Brand Logo Customization Info Card -->
+                        <Border Style="{StaticResource AppleCardStyle}" Padding="20" Margin="0,0,0,16">
+                            <StackPanel>
+                                <TextBlock Text="BRANDING &amp; CUSTOM LOGO" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                <TextBlock Text="Custom Logo Replacement" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,10,0,4"/>
+                                <TextBlock Text="To customize the brand logo with your own image, place a square PNG or ICO file named 'logo.png' in the same folder as this application. Zenith Optimizer will automatically load and display your custom branding upon launch."
+                                           FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" LineHeight="18"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Diagnostic Execution Logs -->
+                        <Border Style="{StaticResource AppleCardStyle}" Padding="20">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,10">
+                                    <TextBlock Text="EXECUTION DIAGNOSTIC LOGS" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                    <Button Content="Clear Logs"
+                                            Click="ClearLogs_Click"
+                                            Style="{StaticResource AppleSecondaryButton}"
+                                            Padding="8,4"
+                                            FontSize="11"
+                                            HorizontalAlignment="Right"/>
+                                </Grid>
+                                <Border Background="{DynamicResource SegmentedTabBgBrush}"
+                                        BorderBrush="{DynamicResource CardBorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="8"
+                                        Padding="12"
+                                        Height="220">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                        <TextBox Text="{Binding StatusLog, Mode=OneWay}"
+                                                 IsReadOnly="True"
+                                                 Background="Transparent"
+                                                 Foreground="{DynamicResource TextSecondaryBrush}"
+                                                 BorderThickness="0"
+                                                 FontFamily="Consolas, Cascadia Code, Courier New"
+                                                 FontSize="11"
+                                                 TextWrapping="Wrap"/>
+                                    </ScrollViewer>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </Grid>
+
+        <!-- ==================== BUSY / PROGRESS BAR OVERLAY ==================== -->
+        <Border Grid.Row="3"
+                Background="{DynamicResource CardBrush}"
+                BorderBrush="{DynamicResource CardBorderBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="20,10"
+                Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <ProgressBar Grid.Column="0"
+                             IsIndeterminate="True"
+                             Width="160" Height="4"
+                             Style="{StaticResource MetricProgressStyle}"
+                             VerticalAlignment="Center"
+                             Margin="0,0,16,0"/>
+                <TextBlock Grid.Column="1"
+                           Text="{Binding BusyStatus}"
+                           FontSize="12"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource AccentBrush}"
+                           VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+    </Grid>
+
+    <Window.Resources>
+        <!-- Apple Card Style -->
+        <Style x:Key="AppleCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource CardBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="16"/>
+        </Style>
+
+        <!-- Metric Card Style -->
+        <Style x:Key="MetricCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource CardBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Padding" Value="14,10"/>
+        </Style>
+
+        <!-- Segmented Tab Navigation RadioButton Style -->
+        <Style x:Key="SegmentedTabStyle" TargetType="RadioButton">
+            <Setter Property="FontFamily" Value="{StaticResource AppleFont}"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="14,6"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="pill"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="8"
+                                Padding="{TemplateBinding Padding}"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="pill" Property="Background" Value="{DynamicResource SegmentedTabActiveBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Risk Filter Pill Style -->
+        <Style x:Key="RiskFilterPillStyle" TargetType="RadioButton">
+            <Setter Property="FontFamily" Value="{StaticResource AppleFont}"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource SegmentedTabBgBrush}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="12,5"/>
+            <Setter Property="Margin" Value="0,0,6,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="pill"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{DynamicResource CardBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="7"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="pill" Property="Background" Value="{DynamicResource AccentBrush}"/>
+                                <Setter TargetName="pill" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Modern Progress Bar Style -->
+        <Style x:Key="MetricProgressStyle" TargetType="ProgressBar">
+            <Setter Property="Background" Value="{DynamicResource SegmentedTabBgBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ProgressBar">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="2">
+                            <Grid x:Name="PART_Track">
+                                <Border x:Name="PART_Indicator"
+                                        HorizontalAlignment="Left"
+                                        Background="{TemplateBinding Foreground}"
+                                        CornerRadius="2"/>
+                            </Grid>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+</Window>
