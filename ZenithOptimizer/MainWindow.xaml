@@ -156,38 +156,40 @@
 
                 <!-- Brand Logo & Identity -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <!-- Purple Brand Logo Image (from logo.png) -->
-                    <Border Height="36" VerticalAlignment="Center" Margin="0,0,12,0" Background="Transparent">
+                    <!-- App Mark Icon (Crisp purple squircle with geometric Z) -->
+                    <Border Width="34" Height="34" CornerRadius="8" Margin="0,0,12,0" VerticalAlignment="Center"
+                            ClipToBounds="True" Background="{DynamicResource AccentBrush}">
                         <Grid>
-                            <!-- Custom loaded logo -->
-                            <Image x:Name="CustomLogoImage"
-                                   Height="34"
-                                   Stretch="Uniform"
-                                   HorizontalAlignment="Left"
-                                   VerticalAlignment="Center"
-                                   Visibility="Collapsed"/>
-                            <!-- Fallback geometric vector mark -->
-                            <Border x:Name="FallbackLogoBorder"
-                                    Width="36" Height="36"
-                                    CornerRadius="9"
-                                    Background="{DynamicResource AccentBrush}"
-                                    Visibility="Visible">
-                                <Path Data="M 18,9 L 26,24 L 22,24 L 18,16 L 14,24 L 10,24 Z"
-                                      Fill="#FFFFFF"
-                                      HorizontalAlignment="Center"
-                                      VerticalAlignment="Center"/>
-                            </Border>
+                            <Image x:Name="AppHeaderIcon" Width="34" Height="34" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
+                            <!-- Fallback geometric vector mark if image not loaded -->
+                            <Path x:Name="FallbackLogoMark"
+                                  Data="M 17,8 L 25,23 L 21,23 L 17,16 L 13,23 L 9,23 Z"
+                                  Fill="#FFFFFF"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"
+                                  Visibility="Collapsed"/>
                         </Grid>
                     </Border>
 
                     <StackPanel VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock x:Name="BrandText" Text="ZENITH" FontWeight="Bold" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <!-- Custom Wordmark Logo (e.g. Zenith. in purple) -->
+                            <Image x:Name="CustomLogoImage"
+                                   Height="24"
+                                   Stretch="Uniform"
+                                   VerticalAlignment="Center"
+                                   RenderOptions.BitmapScalingMode="HighQuality"
+                                   Visibility="Collapsed"/>
+
+                            <!-- Fallback Text Logo if no image -->
+                            <TextBlock x:Name="BrandText" Text="ZENITH" FontWeight="Bold" FontSize="16" 
+                                       Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+
                             <Border Background="{DynamicResource AccentBrushLight}" CornerRadius="4" Padding="6,2" Margin="8,0,0,0" VerticalAlignment="Center">
                                 <TextBlock Text="OPTIMIZER" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}"/>
                             </Border>
                         </StackPanel>
-                        <TextBlock Text="Windows 10/11 Performance Suite" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,1,0,0"/>
+                        <TextBlock Text="Windows 10/11 Performance Suite" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,2,0,0"/>
                     </StackPanel>
                 </StackPanel>
 

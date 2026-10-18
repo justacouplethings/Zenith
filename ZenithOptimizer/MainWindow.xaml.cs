@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ZenithOptimizer.Models;
 using ZenithOptimizer.Services;
@@ -17,41 +18,209 @@ namespace ZenithOptimizer
         public MainWindow()
         {
             InitializeComponent();
-            TryLoadCustomLogo();
+            InitializeBranding();
         }
 
-        private void TryLoadCustomLogo()
+        private void InitializeBranding()
         {
             try
             {
                 string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-                string[] logoCandidates = { "logo.png", "logo.ico", "icon.png", "logo.jpg" };
-                foreach (var candidate in logoCandidates)
-                {
-                    string path = Path.Combine(baseDir, candidate);
-                    if (File.Exists(path))
-                    {
-                        var uri = new Uri(path, UriKind.Absolute);
-                        var bitmap = new BitmapImage();
-                        bitmap.BeginInit();
-                        bitmap.UriSource = uri;
-                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                        bitmap.EndInit();
+                string? processDir = Path.GetDirectoryName(Environment.ProcessPath);
 
-                        this.Icon = bitmap;
-                        if (CustomLogoImage != null && FallbackLogoBorder != null)
-                        {
-                            CustomLogoImage.Source = bitmap;
-                            CustomLogoImage.Visibility = Visibility.Visible;
-                            FallbackLogoBorder.Visibility = Visibility.Collapsed;
-                            if (BrandText != null) BrandText.Visibility = Visibility.Collapsed;
-                        }
-                        ViewModel?.AppendLog($"[Branding] Custom logo active from {candidate}");
-                        break;
+                // 1. Setup crisp App Mark Icon (for window title bar, taskbar, and header squircle)
+                ImageSource? appIcon = null;
+                string[] iconCandidates = { "app.ico", "app_icon.png" };
+                foreach (var candidate in iconCandidates)
+                {
+                    string p1 = Path.Combine(baseDir, candidate);
+                    string? p2 = processDir != null ? Path.Combine(processDir, candidate) : null;
+                    if (File.Exists(p1)) { appIcon = LoadBitmapSafely(p1); if (appIcon != null) break; }
+                    if (p2 != null && File.Exists(p2)) { appIcon = LoadBitmapSafely(p2); if (appIcon != null) break; }
+                }
+
+                if (appIcon == null)
+                {
+                    appIcon = LoadResourceBitmapSafely("app.ico") ?? LoadResourceBitmapSafely("app_icon.png");
+                }
+
+                if (appIcon == null)
+                {
+                    appIcon = CreateFallbackAppIcon();
+                }
+
+                if (appIcon != null)
+                {
+                    this.Icon = appIcon;
+                    if (AppHeaderIcon != null)
+                    {
+                        AppHeaderIcon.Source = appIcon;
+                        AppHeaderIcon.Visibility = Visibility.Visible;
                     }
+                    if (FallbackLogoMark != null)
+                    {
+                        FallbackLogoMark.Visibility = Visibility.Collapsed;
+                    }
+                }
+
+                // 2. Setup Wordmark Logo ("Zenith." in purple)
+                BitmapSource? wordmarkRaw = null;
+                string[] wordmarkCandidates = { "logo_trimmed.png", "logo.png", "logo.ico", "logo.jpg" };
+                foreach (var candidate in wordmarkCandidates)
+                {
+                    string p1 = Path.Combine(baseDir, candidate);
+                    string? p2 = processDir != null ? Path.Combine(processDir, candidate) : null;
+                    if (File.Exists(p1)) { wordmarkRaw = LoadBitmapSafely(p1); if (wordmarkRaw != null) break; }
+                    if (p2 != null && File.Exists(p2)) { wordmarkRaw = LoadBitmapSafely(p2); if (wordmarkRaw != null) break; }
+                }
+
+                if (wordmarkRaw == null)
+                {
+                    wordmarkRaw = LoadResourceBitmapSafely("logo_trimmed.png") ?? LoadResourceBitmapSafely("logo.png");
+                }
+
+                if (wordmarkRaw != null && CustomLogoImage != null)
+                {
+                    // Auto-crop transparent boundaries to avoid tiny/squished wordmark
+                    BitmapSource croppedWordmark = AutoCropTransparentBorders(wordmarkRaw);
+                    CustomLogoImage.Source = croppedWordmark;
+                    CustomLogoImage.Visibility = Visibility.Visible;
+                    if (BrandText != null) BrandText.Visibility = Visibility.Collapsed;
+                }
+                else if (BrandText != null)
+                {
+                    BrandText.Visibility = Visibility.Visible;
+                    if (CustomLogoImage != null) CustomLogoImage.Visibility = Visibility.Collapsed;
                 }
             }
             catch { }
+        }
+
+        private static BitmapSource AutoCropTransparentBorders(BitmapSource source)
+        {
+            try
+            {
+                var formatted = new FormatConvertedBitmap(source, PixelFormats.Bgra32, null, 0);
+                int width = formatted.PixelWidth;
+                int height = formatted.PixelHeight;
+                int stride = width * 4;
+                byte[] pixels = new byte[height * stride];
+                formatted.CopyPixels(pixels, stride, 0);
+
+                int minX = width, minY = height, maxX = 0, maxY = 0;
+                bool found = false;
+
+                for (int y = 0; y < height; y++)
+                {
+                    int row = y * stride;
+                    for (int x = 0; x < width; x++)
+                    {
+                        byte alpha = pixels[row + (x * 4) + 3];
+                        if (alpha > 15)
+                        {
+                            if (x < minX) minX = x;
+                            if (x > maxX) maxX = x;
+                            if (y < minY) minY = y;
+                            if (y > maxY) maxY = y;
+                            found = true;
+                        }
+                    }
+                }
+
+                if (!found || minX >= maxX || minY >= maxY)
+                    return source;
+
+                // 2px margin within source bounds
+                minX = Math.Max(0, minX - 2);
+                minY = Math.Max(0, minY - 2);
+                maxX = Math.Min(width - 1, maxX + 2);
+                maxY = Math.Min(height - 1, maxY + 2);
+
+                int cropWidth = maxX - minX + 1;
+                int cropHeight = maxY - minY + 1;
+
+                var rect = new Int32Rect(minX, minY, cropWidth, cropHeight);
+                return new CroppedBitmap(formatted, rect);
+            }
+            catch
+            {
+                return source;
+            }
+        }
+
+        private static BitmapImage? LoadBitmapSafely(string filePath)
+        {
+            try
+            {
+                if (!File.Exists(filePath)) return null;
+                var bmp = new BitmapImage();
+                bmp.BeginInit();
+                bmp.UriSource = new Uri(filePath, UriKind.Absolute);
+                bmp.CacheOption = BitmapCacheOption.OnLoad;
+                bmp.CreateOptions = BitmapCreateOptions.PreservePixelFormat;
+                bmp.EndInit();
+                bmp.Freeze();
+                return bmp;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static BitmapImage? LoadResourceBitmapSafely(string resourceName)
+        {
+            try
+            {
+                var uri = new Uri($"pack://application:,,,/{resourceName.TrimStart('/')}", UriKind.Absolute);
+                var bmp = new BitmapImage();
+                bmp.BeginInit();
+                bmp.UriSource = uri;
+                bmp.CacheOption = BitmapCacheOption.OnLoad;
+                bmp.EndInit();
+                bmp.Freeze();
+                return bmp;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static ImageSource CreateFallbackAppIcon()
+        {
+            var visual = new DrawingVisual();
+            using (var dc = visual.RenderOpen())
+            {
+                var rect = new Rect(0, 0, 64, 64);
+                var brush = new LinearGradientBrush(
+                    Color.FromRgb(0x8B, 0x5C, 0xF6),
+                    Color.FromRgb(0x6D, 0x28, 0xD9),
+                    new Point(0, 0),
+                    new Point(1, 1));
+                dc.DrawRoundedRectangle(brush, null, rect, 14, 14);
+
+                var streamGeom = new StreamGeometry();
+                using (var ctx = streamGeom.Open())
+                {
+                    ctx.BeginFigure(new Point(18, 18), true, true);
+                    ctx.LineTo(new Point(46, 18), true, false);
+                    ctx.LineTo(new Point(24, 46), true, false);
+                    ctx.LineTo(new Point(46, 46), true, false);
+                    ctx.LineTo(new Point(46, 41), true, false);
+                    ctx.LineTo(new Point(30, 41), true, false);
+                    ctx.LineTo(new Point(46, 21), true, false);
+                    ctx.LineTo(new Point(46, 18), true, false);
+                    ctx.LineTo(new Point(18, 18), true, false);
+                }
+                streamGeom.Freeze();
+                dc.DrawGeometry(Brushes.White, null, streamGeom);
+            }
+
+            var rtb = new RenderTargetBitmap(64, 64, 96, 96, PixelFormats.Pbgra32);
+            rtb.Render(visual);
+            rtb.Freeze();
+            return rtb;
         }
 
         #region Navigation
