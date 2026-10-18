@@ -16,8 +16,8 @@ namespace ZenithOptimizer
 
             try
             {
-                // Apply initial Cupertino Dark Theme
-                ThemeManager.ApplyTheme(AppTheme.CupertinoDark, AccentColor.AppleBlue);
+                // Apply initial Cupertino Dark Theme with signature Zenith Purple
+                ThemeManager.ApplyTheme(AppTheme.CupertinoDark, AccentColor.RoyalViolet);
 
                 // Explicitly instantiate and show MainWindow
                 var mainWindow = new MainWindow();

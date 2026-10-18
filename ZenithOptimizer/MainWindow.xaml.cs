@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
@@ -36,14 +37,16 @@ namespace ZenithOptimizer
                         bitmap.UriSource = uri;
                         bitmap.CacheOption = BitmapCacheOption.OnLoad;
                         bitmap.EndInit();
+
                         this.Icon = bitmap;
-                        if (CustomLogoImage != null && PlaceholderLogoPath != null)
+                        if (CustomLogoImage != null && FallbackLogoBorder != null)
                         {
                             CustomLogoImage.Source = bitmap;
                             CustomLogoImage.Visibility = Visibility.Visible;
-                            PlaceholderLogoPath.Visibility = Visibility.Collapsed;
+                            FallbackLogoBorder.Visibility = Visibility.Collapsed;
+                            if (BrandText != null) BrandText.Visibility = Visibility.Collapsed;
                         }
-                        ViewModel?.AppendLog($"[Branding] Loaded custom brand logo from {candidate}");
+                        ViewModel?.AppendLog($"[Branding] Custom logo active from {candidate}");
                         break;
                     }
                 }
@@ -61,6 +64,25 @@ namespace ZenithOptimizer
         }
         #endregion
 
+        #region Device Profile Toggle
+        private void ChassisLaptop_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.ToggleDeviceProfile(true);
+        }
+
+        private void ChassisDesktop_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.ToggleDeviceProfile(false);
+        }
+        #endregion
+
+        #region Smart Audit
+        private void RunSmartAudit_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.RunSmartHardwareAudit();
+        }
+        #endregion
+
         #region Risk Filtering
         private void RiskFilter_Click(object sender, RoutedEventArgs e)
         {
@@ -75,28 +97,19 @@ namespace ZenithOptimizer
         private void PresetSafe_Click(object sender, RoutedEventArgs e)
         {
             ViewModel.ApplyPreset("SafeDefault");
-            ViewModel.ActiveTab = "Universal";
+            ViewModel.ActiveTab = "Tweaks";
+        }
+
+        private void PresetLaptop_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.ApplyPreset("LaptopBattery");
+            ViewModel.ActiveTab = "Tweaks";
         }
 
         private void PresetGaming_Click(object sender, RoutedEventArgs e)
         {
             ViewModel.ApplyPreset("ProGaming");
-            ViewModel.ActiveTab = "Universal";
-        }
-
-        private void PresetUltra_Click(object sender, RoutedEventArgs e)
-        {
-            var res = MessageBox.Show(
-                "The Maximum Strip preset enables the Ultimate Performance ACPI scheme and memory/service modifications.\n\nRecommended for desktop gaming rigs. Continue?",
-                "Zenith Optimizer — High Performance Notice",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
-
-            if (res == MessageBoxResult.Yes)
-            {
-                ViewModel.ApplyPreset("MaximumStrip");
-                ViewModel.ActiveTab = "Universal";
-            }
+            ViewModel.ActiveTab = "Tweaks";
         }
 
         private void RevertAll_Click(object sender, RoutedEventArgs e)
@@ -126,15 +139,6 @@ namespace ZenithOptimizer
             ViewModel.RestartExplorer();
         }
 
-        private async void CheckStatus_Click(object sender, RoutedEventArgs e)
-        {
-            ViewModel.BusyStatus = "Refreshing tweak status...";
-            ViewModel.IsBusy = true;
-            await ViewModel.RefreshAllStates();
-            ViewModel.IsBusy = false;
-            ViewModel.BusyStatus = string.Empty;
-        }
-
         private async void CleanTemp_Click(object sender, RoutedEventArgs e)
         {
             await ViewModel.RunCleanTempAsync();
@@ -142,19 +146,35 @@ namespace ZenithOptimizer
 
         private void FreeStorage_Click(object sender, RoutedEventArgs e)
         {
-            var hibItem = System.Linq.Enumerable.FirstOrDefault(ViewModel.AllOptimizations, x => x.Id == "uni_disable_hibernation");
+            var hibItem = ViewModel.AllOptimizations.FirstOrDefault(x => x.Id == "uni_disable_hibernation");
             if (hibItem != null)
             {
                 hibItem.ApplyAction?.Invoke();
                 hibItem.RefreshStatus();
-                ViewModel.AppendLog("[Storage] Hibernation disabled. Reclaimed SSD storage.");
+                ViewModel.AppendLog("[Storage] Hibernation disabled. Reclaimed SSD storage capacity.");
             }
         }
         #endregion
 
-        #region Batch Execution
+        #region Batch Execution with Guardrails
         private async void ApplySelected_Click(object sender, RoutedEventArgs e)
         {
+            // Check if user selected any Risky or 50/50 tweaks to show guardrail
+            var selected = ViewModel.AllOptimizations.Where(x => x.IsSelected).ToList();
+            var riskyCount = selected.Count(x => x.Risk == RiskLevel.Risky);
+            var cautionCount = selected.Count(x => x.Risk == RiskLevel.Caution);
+
+            if (riskyCount > 0 || cautionCount > 0)
+            {
+                var msg = $"You have selected {selected.Count} optimizations, including:\n" +
+                          $"• {riskyCount} High-Impact (Risky) tweak(s)\n" +
+                          $"• {cautionCount} 50/50 Caution tweak(s)\n\n" +
+                          "Make sure you have reviewed their trade-offs or created a System Restore Point. Proceed with optimization?";
+
+                var res = MessageBox.Show(msg, "Zenith Optimizer — Optimization Confirmation", MessageBoxButton.YesNo, MessageBoxImage.Information);
+                if (res != MessageBoxResult.Yes) return;
+            }
+
             await ViewModel.ApplySelectedAsync();
         }
 
@@ -183,12 +203,22 @@ namespace ZenithOptimizer
         {
             if (sender is Button btn && btn.Tag is OptimizationItem item)
             {
+                if (item.Risk == RiskLevel.Risky)
+                {
+                    var confirm = MessageBox.Show(
+                        $"Notice: '{item.Title}' is classified as RISKY.\n\nTrade-off: {item.Tradeoff}\n\nApply this tweak?",
+                        "Confirm High-Impact Tweak",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Warning);
+                    if (confirm != MessageBoxResult.Yes) return;
+                }
+
                 item.IsProcessing = true;
                 try
                 {
                     bool ok = item.ApplyAction?.Invoke() ?? false;
                     item.RefreshStatus();
-                    ViewModel.AppendLog(ok ? $"[SUCCESS] Applied {item.Title}" : $"[FAILED] Could not apply {item.Title}");
+                    ViewModel.AppendLog(ok ? $"[SUCCESS] {item.Title}" : $"[FAILED] Could not apply {item.Title}");
                     if (item.RequiresRestart)
                     {
                         ViewModel.AppendLog($"[Notice] {item.Title} recommends restarting File Explorer or system.");
@@ -215,7 +245,7 @@ namespace ZenithOptimizer
                 {
                     bool ok = item.RevertAction?.Invoke() ?? false;
                     item.RefreshStatus();
-                    ViewModel.AppendLog(ok ? $"[REVERTED] Restored {item.Title}" : $"[FAILED] Could not revert {item.Title}");
+                    ViewModel.AppendLog(ok ? $"[RESTORED] {item.Title}" : $"[FAILED] Could not revert {item.Title}");
                 }
                 catch (Exception ex)
                 {
@@ -230,12 +260,34 @@ namespace ZenithOptimizer
         }
         #endregion
 
-        #region Bloatware & Maintenance
+        #region Friendly Bloatware Actions
+        private void DebloatSelectRecommended_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.SelectSafeDebloatOnly();
+        }
+
+        private void DebloatSelectAll_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.SelectAllDebloat();
+        }
+
+        private void DebloatDeselectAll_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.DeselectAllDebloat();
+        }
+
         private async void PurgeBloatware_Click(object sender, RoutedEventArgs e)
         {
+            var selected = ViewModel.BloatwareCategories.Where(x => x.IsSelected).ToList();
+            if (selected.Count == 0)
+            {
+                MessageBox.Show("Please select at least one app category to uninstall.", "Notice", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
             var res = MessageBox.Show(
-                "Are you sure you want to remove selected pre-installed UWP bloatware packages for all user accounts?",
-                "Purge Bloatware Confirmation",
+                $"Uninstall {selected.Count} selected bloatware categories for all user accounts?\n\n(Apps can still be reinstalled from the Microsoft Store anytime if needed).",
+                "Uninstall Apps Confirmation",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Question);
 

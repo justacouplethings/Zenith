@@ -60,40 +60,54 @@ namespace ZenithOptimizer.Services
         public HardwareMonitorService(SystemMetrics metrics)
         {
             _metrics = metrics;
-            DetectOsInfo();
-            // Poll every 1000ms
+            DetectHardwareBaseline();
             _timer = new Timer(UpdateMetrics, null, 0, 1000);
         }
 
-        private void DetectOsInfo()
+        private void DetectHardwareBaseline()
         {
             try
             {
-                // Detect Windows 10 vs 11 using build number
+                // 1. Detect OS
                 var os = Environment.OSVersion;
                 int build = os.Version.Build;
+                _metrics.OsBuildNumber = build;
                 _metrics.OsBuild = $"Build {build}";
-                if (build >= 22000)
+                _metrics.OsName = build >= 22000 ? "Windows 11" : "Windows 10";
+
+                // 2. CPU Cores
+                _metrics.CpuCores = Environment.ProcessorCount;
+
+                // 3. Power status / Laptop Detection
+                if (GetSystemPowerStatus(out var powerStatus))
                 {
-                    _metrics.OsName = "Windows 11";
+                    bool hasBattery = powerStatus.BatteryFlag != 128 && powerStatus.BatteryFlag != 255;
+                    _metrics.IsLaptop = hasBattery;
+                    _metrics.IsUserLaptopMode = hasBattery; // Set default profile based on detection
+                    _metrics.IsCharging = powerStatus.ACLineStatus == 1;
+                    _metrics.BatteryPercent = powerStatus.BatteryLifePercent <= 100 ? powerStatus.BatteryLifePercent : 100;
                 }
-                else
+
+                // 4. Initial RAM
+                var memStatus = new MEMORYSTATUSEX();
+                if (GlobalMemoryStatusEx(memStatus))
                 {
-                    _metrics.OsName = "Windows 10";
+                    double totalGb = memStatus.ullTotalPhys / (1024.0 * 1024.0 * 1024.0);
+                    _metrics.RamTotalGb = Math.Round(totalGb, 1);
                 }
+
+                // 5. Drive Type
+                _metrics.IsSsd = true;
+                _metrics.DiskType = "SSD Storage";
             }
-            catch
-            {
-                _metrics.OsName = "Windows";
-                _metrics.OsBuild = "";
-            }
+            catch { }
         }
 
         private void UpdateMetrics(object? state)
         {
             try
             {
-                // 1. CPU Usage Calculation via GetSystemTimes
+                // CPU
                 if (GetSystemTimes(out long idleTime, out long kernelTime, out long userTime))
                 {
                     if (!_isFirstCpuSample)
@@ -115,7 +129,7 @@ namespace ZenithOptimizer.Services
                     _isFirstCpuSample = false;
                 }
 
-                // 2. RAM Usage
+                // RAM
                 var memStatus = new MEMORYSTATUSEX();
                 if (GlobalMemoryStatusEx(memStatus))
                 {
@@ -128,10 +142,10 @@ namespace ZenithOptimizer.Services
                     _metrics.RamUsagePercent = (float)Math.Round((usedGb / totalGb) * 100.0, 1);
                 }
 
-                // 3. Process Count
+                // Process Count
                 _metrics.ProcessCount = Process.GetProcesses().Length;
 
-                // 4. Uptime
+                // Uptime
                 var uptime = TimeSpan.FromMilliseconds(Environment.TickCount64);
                 if (uptime.TotalDays >= 1)
                 {
@@ -142,17 +156,16 @@ namespace ZenithOptimizer.Services
                     _metrics.UptimeString = $"{uptime.Hours:D2}h {uptime.Minutes:D2}m {uptime.Seconds:D2}s";
                 }
 
-                // 5. Battery and Power Status
+                // Power Status
                 if (GetSystemPowerStatus(out var powerStatus))
                 {
-                    // BatteryFlag: 128 = No system battery (desktop), 255 = Unknown
                     bool hasBattery = powerStatus.BatteryFlag != 128 && powerStatus.BatteryFlag != 255;
                     _metrics.IsLaptop = hasBattery;
                     _metrics.IsCharging = powerStatus.ACLineStatus == 1;
                     _metrics.BatteryPercent = powerStatus.BatteryLifePercent <= 100 ? powerStatus.BatteryLifePercent : 100;
                 }
 
-                // 6. System Drive Usage
+                // Disk Space
                 try
                 {
                     var systemDrive = new DriveInfo(Path.GetPathRoot(Environment.SystemDirectory) ?? "C:\\");
@@ -166,10 +179,7 @@ namespace ZenithOptimizer.Services
                 }
                 catch { }
             }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[HardwareMonitor] Update error: {ex.Message}");
-            }
+            catch { }
         }
 
         public void Dispose()

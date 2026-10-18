@@ -9,8 +9,8 @@
         xmlns:services="clr-namespace:ZenithOptimizer.Services"
         mc:Ignorable="d"
         Title="Zenith Optimizer"
-        Height="800" Width="1180"
-        MinHeight="680" MinWidth="980"
+        Height="840" Width="1200"
+        MinHeight="700" MinWidth="1020"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource BackgroundBrush}"
         Foreground="{DynamicResource TextPrimaryBrush}"
@@ -43,7 +43,7 @@
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Padding" Value="14,6"/>
+            <Setter Property="Padding" Value="16,6"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
@@ -128,7 +128,7 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <!-- 0: Header / Segmented Bar -->
+            <!-- 0: Header & Navigation -->
             <RowDefinition Height="Auto"/>
             <!-- 1: Live Hardware Telemetry Bar -->
             <RowDefinition Height="Auto"/>
@@ -138,7 +138,7 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- ==================== HEADER & SEGMENTED TABS ==================== -->
+        <!-- ==================== HEADER & BRANDING ==================== -->
         <Border Grid.Row="0"
                 Background="{DynamicResource CardBrush}"
                 BorderBrush="{DynamicResource CardBorderBrush}"
@@ -150,46 +150,54 @@
                     <ColumnDefinition Width="Auto"/>
                     <!-- Segmented Tab Navigation -->
                     <ColumnDefinition Width="*"/>
-                    <!-- Right Actions & OS Info -->
+                    <!-- Right Actions & Device Badge -->
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Brand & Logo -->
+                <!-- Brand Logo & Identity -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <!-- Placeholder Logo: Modern Apple-style geometric crest -->
-                    <Border Width="38" Height="38"
-                            CornerRadius="10"
-                            Background="{DynamicResource AccentBrush}"
-                            Margin="0,0,14,0"
-                            ClipToBounds="True">
+                    <!-- Purple Brand Logo Image (from logo.png) -->
+                    <Border Height="36" VerticalAlignment="Center" Margin="0,0,12,0" Background="Transparent">
                         <Grid>
-                            <!-- Placeholder Vector Mark (Zenith Chevron) -->
-                            <Path x:Name="PlaceholderLogoPath"
-                                  Data="M 19,10 L 27,24 L 23,24 L 19,16 L 15,24 L 11,24 Z"
-                                  Fill="#FFFFFF"
-                                  HorizontalAlignment="Center"
-                                  VerticalAlignment="Center"/>
-                            <Image x:Name="CustomLogoImage" Stretch="UniformToFill" Visibility="Collapsed"/>
+                            <!-- Custom loaded logo -->
+                            <Image x:Name="CustomLogoImage"
+                                   Height="34"
+                                   Stretch="Uniform"
+                                   HorizontalAlignment="Left"
+                                   VerticalAlignment="Center"
+                                   Visibility="Collapsed"/>
+                            <!-- Fallback geometric vector mark -->
+                            <Border x:Name="FallbackLogoBorder"
+                                    Width="36" Height="36"
+                                    CornerRadius="9"
+                                    Background="{DynamicResource AccentBrush}"
+                                    Visibility="Visible">
+                                <Path Data="M 18,9 L 26,24 L 22,24 L 18,16 L 14,24 L 10,24 Z"
+                                      Fill="#FFFFFF"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"/>
+                            </Border>
                         </Grid>
                     </Border>
+
                     <StackPanel VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="ZENITH" FontWeight="Bold" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock x:Name="BrandText" Text="ZENITH" FontWeight="Bold" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}"/>
                             <Border Background="{DynamicResource AccentBrushLight}" CornerRadius="4" Padding="6,2" Margin="8,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="PRO" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}"/>
+                                <TextBlock Text="OPTIMIZER" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}"/>
                             </Border>
                         </StackPanel>
                         <TextBlock Text="Windows 10/11 Performance Suite" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,1,0,0"/>
                     </StackPanel>
                 </StackPanel>
 
-                <!-- Apple Segmented Navigation Pills -->
+                <!-- 4 Unified Segmented Navigation Pills -->
                 <Border Grid.Column="1"
                         HorizontalAlignment="Center"
                         Background="{DynamicResource SegmentedTabBgBrush}"
                         CornerRadius="10"
                         Padding="3"
-                        Margin="20,0">
+                        Margin="16,0">
                     <StackPanel Orientation="Horizontal">
                         <RadioButton Content="Dashboard"
                                      GroupName="NavTabs"
@@ -197,21 +205,12 @@
                                      Tag="Dashboard"
                                      Click="TabButton_Click"
                                      Style="{StaticResource SegmentedTabStyle}"/>
-                        <RadioButton Content="Windows 11"
+                        <RadioButton Content="Tweaks"
                                      GroupName="NavTabs"
-                                     Tag="Win11"
+                                     Tag="Tweaks"
                                      Click="TabButton_Click"
-                                     Style="{StaticResource SegmentedTabStyle}"/>
-                        <RadioButton Content="Windows 10"
-                                     GroupName="NavTabs"
-                                     Tag="Win10"
-                                     Click="TabButton_Click"
-                                     Style="{StaticResource SegmentedTabStyle}"/>
-                        <RadioButton Content="Universal Tweaks"
-                                     GroupName="NavTabs"
-                                     Tag="Universal"
-                                     Click="TabButton_Click"
-                                     Style="{StaticResource SegmentedTabStyle}"/>
+                                     Style="{StaticResource SegmentedTabStyle}"
+                                     ToolTip="Unified tweaks auto-filtered for your Windows version"/>
                         <RadioButton Content="Debloat Apps"
                                      GroupName="NavTabs"
                                      Tag="Debloat"
@@ -225,8 +224,30 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Right Quick Utilities & OS Tag -->
+                <!-- Right Quick Utilities & Hardware Chassis Selector -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Device Profile Toggle (Laptop vs Desktop) -->
+                    <Border Background="{DynamicResource SegmentedTabBgBrush}" CornerRadius="8" Padding="2" Margin="0,0,10,0">
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton Content="💻 Laptop"
+                                         GroupName="DeviceChassisProfile"
+                                         IsChecked="{Binding Metrics.IsUserLaptopMode}"
+                                         Click="ChassisLaptop_Click"
+                                         Style="{StaticResource SegmentedTabStyle}"
+                                         Padding="10,4"
+                                         FontSize="11"
+                                         ToolTip="Enables battery saver optimizations and modern standby drain fixes"/>
+                            <RadioButton Content="🖥️ Desktop"
+                                         GroupName="DeviceChassisProfile"
+                                         IsChecked="{Binding Metrics.IsUserLaptopMode, Converter={StaticResource InverseBooleanConverter}}"
+                                         Click="ChassisDesktop_Click"
+                                         Style="{StaticResource SegmentedTabStyle}"
+                                         Padding="10,4"
+                                         FontSize="11"
+                                         ToolTip="Enables high-throughput gaming latency profiles"/>
+                        </StackPanel>
+                    </Border>
+
                     <!-- Restore Point Quick Action -->
                     <Button Content="Restore Point"
                             Click="CreateRestorePoint_Click"
@@ -242,7 +263,7 @@
                             Style="{StaticResource AppleSecondaryButton}"
                             Padding="12,6"
                             FontSize="12"
-                            Margin="0,0,12,0"
+                            Margin="0,0,10,0"
                             ToolTip="Instantly restarts File Explorer to apply UI tweaks"/>
 
                     <!-- OS Badge -->
@@ -263,16 +284,12 @@
         <!-- ==================== LIVE HARDWARE TELEMETRY BAR ==================== -->
         <Border Grid.Row="1"
                 Background="{DynamicResource BackgroundBrush}"
-                Padding="20,14,20,8">
+                Padding="20,12,20,6">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <!-- CPU Card -->
                     <ColumnDefinition Width="*"/>
-                    <!-- RAM Card -->
                     <ColumnDefinition Width="*"/>
-                    <!-- Disk & Tasks Card -->
                     <ColumnDefinition Width="*"/>
-                    <!-- Power & Optimization Score Card -->
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
@@ -284,12 +301,11 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="CPU LOAD" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                        </StackPanel>
+                        <TextBlock Text="CPU LOAD" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}"/>
                         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,4,0,6">
-                            <TextBlock Text="{Binding Metrics.CpuUsage, StringFormat={}{0:F1}}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                            <TextBlock Text="%" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="2,8,0,0"/>
+                            <TextBlock Text="{Binding Metrics.CpuUsage, StringFormat={}{0:F1}}" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock Text="%" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="2,7,0,0"/>
+                            <TextBlock Text="{Binding Metrics.CpuCores, StringFormat={} ({0} Cores)}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="6,9,0,0"/>
                         </StackPanel>
                         <ProgressBar Grid.Row="2"
                                      Value="{Binding Metrics.CpuUsage}"
@@ -312,9 +328,9 @@
                             <TextBlock Text="{Binding Metrics.RamUsagePercent, StringFormat={}{0:F0}%}" HorizontalAlignment="Right" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}"/>
                         </Grid>
                         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,4,0,6">
-                            <TextBlock Text="{Binding Metrics.RamUsedGb, StringFormat={}{0:F1}}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                            <TextBlock Text=" / " FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="2,8,0,0"/>
-                            <TextBlock Text="{Binding Metrics.RamTotalGb, StringFormat={}{0:F1} GB}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,8,0,0"/>
+                            <TextBlock Text="{Binding Metrics.RamUsedGb, StringFormat={}{0:F1}}" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock Text=" / " FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="2,7,0,0"/>
+                            <TextBlock Text="{Binding Metrics.RamTotalGb, StringFormat={}{0:F1} GB}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,7,0,0"/>
                         </StackPanel>
                         <ProgressBar Grid.Row="2"
                                      Value="{Binding Metrics.RamUsagePercent}"
@@ -324,7 +340,7 @@
                     </Grid>
                 </Border>
 
-                <!-- Disk & Tasks Card -->
+                <!-- Storage & Procs Card -->
                 <Border Grid.Column="2" Style="{StaticResource MetricCardStyle}" Margin="6,0,6,0">
                     <Grid>
                         <Grid.RowDefinitions>
@@ -337,9 +353,9 @@
                             <TextBlock Text="{Binding Metrics.DiskUsagePercent, StringFormat={}C: {0:F0}%}" HorizontalAlignment="Right" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}"/>
                         </Grid>
                         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,4,0,6">
-                            <TextBlock Text="{Binding Metrics.ProcessCount}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                            <TextBlock Text=" Procs • " FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" Margin="6,8,0,0"/>
-                            <TextBlock Text="{Binding Metrics.UptimeString}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,8,0,0"/>
+                            <TextBlock Text="{Binding Metrics.ProcessCount}" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock Text=" Procs • " FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="6,7,0,0"/>
+                            <TextBlock Text="{Binding Metrics.UptimeString}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,7,0,0"/>
                         </StackPanel>
                         <ProgressBar Grid.Row="2"
                                      Value="{Binding Metrics.DiskUsagePercent}"
@@ -349,7 +365,7 @@
                     </Grid>
                 </Border>
 
-                <!-- Power & Optimization Score Card -->
+                <!-- Device Mode & Optimization Score Card -->
                 <Border Grid.Column="3" Style="{StaticResource MetricCardStyle}" Margin="6,0,0,0">
                     <Grid>
                         <Grid.RowDefinitions>
@@ -358,14 +374,14 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
                         <Grid>
-                            <TextBlock Text="OPTIMIZATION HEALTH" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                            <TextBlock Text="OPTIMIZED INDEX" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}"/>
                             <TextBlock Text="{Binding Metrics.OptimizationScore, StringFormat={}{0}%}" HorizontalAlignment="Right" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}"/>
                         </Grid>
                         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,4,0,6">
-                            <TextBlock Text="{Binding Metrics.TotalAppliedTweaks}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource SafeBadgeBrush}"/>
-                            <TextBlock Text=" of " FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" Margin="4,8,0,0"/>
-                            <TextBlock Text="{Binding Metrics.TotalAvailableTweaks}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,8,0,0"/>
-                            <TextBlock Text=" Active" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" Margin="2,8,0,0"/>
+                            <TextBlock Text="{Binding Metrics.TotalAppliedTweaks}" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource SafeBadgeBrush}"/>
+                            <TextBlock Text=" of " FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="4,7,0,0"/>
+                            <TextBlock Text="{Binding Metrics.TotalAvailableTweaks}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,7,0,0"/>
+                            <TextBlock Text=" Active" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="2,7,0,0"/>
                         </StackPanel>
                         <ProgressBar Grid.Row="2"
                                      Value="{Binding Metrics.OptimizationScore}"
@@ -378,32 +394,102 @@
         </Border>
 
         <!-- ==================== MAIN CONTENT TABS ==================== -->
-        <Grid Grid.Row="2" Margin="20,8,20,16">
+        <Grid Grid.Row="2" Margin="20,6,20,14">
 
             <!-- TAB 1: DASHBOARD -->
             <Grid Visibility="{Binding ActiveTab, Converter={StaticResource TabVisibilityConverter}, ConverterParameter=Dashboard}">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel>
 
-                        <!-- Hero Banner Card -->
-                        <Border Style="{StaticResource AppleCardStyle}" Padding="24,20" Background="{DynamicResource CardBrush}" Margin="0,0,0,16">
+                        <!-- System Safety Shield Banner -->
+                        <Border Style="{StaticResource AppleCardStyle}" Padding="20,16" Margin="0,0,0,14" Background="{DynamicResource CardBrush}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="High-Precision Windows Optimization" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                    <TextBlock Text="Fine-tune operating system responsiveness, disable intrusive telemetry, reclaim storage, and lower gaming latency using battle-tested kernel and registry configurations."
-                                               FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,6,0,0" LineHeight="18"/>
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                        <TextBlock Text="🛡️ System Safety Shield &amp; Optimization Checklist" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                        <Border CornerRadius="6" Padding="6,2" Margin="10,0,0,0" VerticalAlignment="Center">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Metrics.IsRestorePointCreated}" Value="True">
+                                                            <Setter Property="Background" Value="{DynamicResource SafeBadgeBgBrush}"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Metrics.IsRestorePointCreated}" Value="False">
+                                                            <Setter Property="Background" Value="{DynamicResource CautionBadgeBgBrush}"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock FontSize="10" FontWeight="Bold">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Metrics.IsRestorePointCreated}" Value="True">
+                                                                <Setter Property="Text" Value="RESTORE POINT ACTIVE"/>
+                                                                <Setter Property="Foreground" Value="{DynamicResource SafeBadgeBrush}"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Metrics.IsRestorePointCreated}" Value="False">
+                                                                <Setter Property="Text" Value="RESTORE POINT RECOMMENDED"/>
+                                                                <Setter Property="Foreground" Value="{DynamicResource CautionBadgeBrush}"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Border>
+                                    </StackPanel>
+                                    <TextBlock Text="Every tweak is labeled with risk levels: 🟢 Safe (100% reversible, zero side effects), 🟡 50/50 Caution (disables secondary features like GameDVR or Indexing), and 🔴 Risky (for competitive gaming). Always create a Restore Point before applying major changes."
+                                               FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" LineHeight="17" Margin="0,4,0,0"/>
                                 </StackPanel>
                                 <Button Grid.Column="1"
-                                        Content="Check System Status"
-                                        Click="CheckStatus_Click"
+                                        Content="Create Restore Point"
+                                        Click="CreateRestorePoint_Click"
                                         Style="{StaticResource AppleSecondaryButton}"
-                                        Padding="16,10"
+                                        Padding="16,8"
                                         VerticalAlignment="Center"
                                         Margin="16,0,0,0"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Smart Hardware Audit Card -->
+                        <Border Style="{StaticResource AppleCardStyle}" Padding="20,16" Margin="0,0,0,14">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid>
+                                    <StackPanel>
+                                        <TextBlock Text="⚡ Zenith Smart Hardware Audit Engine" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                        <TextBlock Text="Analyzes your CPU cores, RAM capacity, SSD/NVMe storage, and device chassis to calculate the optimal tweaks." FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                    <Button Content="Run Smart Audit &amp; Select Best Tweaks"
+                                            Click="RunSmartAudit_Click"
+                                            Style="{StaticResource AppleButton}"
+                                            Padding="18,8"
+                                            HorizontalAlignment="Right"/>
+                                </Grid>
+
+                                <!-- Audit Summary Box -->
+                                <Border Grid.Row="1"
+                                        Background="{DynamicResource SegmentedTabBgBrush}"
+                                        BorderBrush="{DynamicResource CardBorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="8"
+                                        Padding="12"
+                                        Margin="0,12,0,0">
+                                    <TextBlock Text="{Binding Metrics.SmartAuditSummary}"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               FontSize="11"
+                                               FontFamily="Consolas, Cascadia Code, Courier New"
+                                               TextWrapping="Wrap"
+                                               LineHeight="16"/>
+                                </Border>
                             </Grid>
                         </Border>
 
@@ -411,7 +497,7 @@
                         <TextBlock Text="ONE-CLICK OPTIMIZATION PRESETS" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="4,0,0,10"/>
 
                         <!-- 4 Presets Grid -->
-                        <Grid Margin="0,0,0,16">
+                        <Grid Margin="0,0,0,14">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
@@ -429,14 +515,14 @@
                                     </Grid.RowDefinitions>
                                     <StackPanel Orientation="Horizontal">
                                         <Border Background="{DynamicResource SafeBadgeBgBrush}" CornerRadius="6" Padding="6,2">
-                                            <TextBlock Text="SAFE" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource SafeBadgeBrush}"/>
+                                            <TextBlock Text="SAFE" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource SafeBadgeBrush}"/>
                                         </Border>
                                         <TextBlock Text="Recommended" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="8,2,0,0"/>
                                     </StackPanel>
-                                    <StackPanel Grid.Row="1" Margin="0,10,0,16">
-                                        <TextBlock Text="Safe Productivity" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                        <TextBlock Text="Disables telemetry, error reporting, bloatware autoinstall, lock screen ads, and background indexing delay. 100% stable."
-                                                   FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" LineHeight="16" Margin="0,6,0,0"/>
+                                    <StackPanel Grid.Row="1" Margin="0,8,0,14">
+                                        <TextBlock Text="Safe Productivity" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                        <TextBlock Text="Disables telemetry, error reporting, bloatware autoinstall, lock screen ads, and background indexing delay."
+                                                   FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" LineHeight="15" Margin="0,4,0,0"/>
                                     </StackPanel>
                                     <Button Grid.Row="2"
                                             Content="Load Safe Preset"
@@ -445,7 +531,7 @@
                                 </Grid>
                             </Border>
 
-                            <!-- Preset 2: Pro Gaming -->
+                            <!-- Preset 2: Laptop Battery -->
                             <Border Grid.Column="1" Style="{StaticResource AppleCardStyle}" Margin="6,0,6,0">
                                 <Grid>
                                     <Grid.RowDefinitions>
@@ -454,24 +540,24 @@
                                         <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
                                     <StackPanel Orientation="Horizontal">
-                                        <Border Background="{DynamicResource CautionBadgeBgBrush}" CornerRadius="6" Padding="6,2">
-                                            <TextBlock Text="50/50" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource CautionBadgeBrush}"/>
+                                        <Border Background="{DynamicResource SafeBadgeBgBrush}" CornerRadius="6" Padding="6,2">
+                                            <TextBlock Text="LAPTOP" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource SafeBadgeBrush}"/>
                                         </Border>
-                                        <TextBlock Text="Gaming Latency" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="8,2,0,0"/>
+                                        <TextBlock Text="Battery Saver" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="8,2,0,0"/>
                                     </StackPanel>
-                                    <StackPanel Grid.Row="1" Margin="0,10,0,16">
-                                        <TextBlock Text="Pro Gaming &amp; Latency" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                        <TextBlock Text="Eliminates GameDVR micro-stutter, optimizes MMCSS network throttling, enforces 1:1 raw mouse input, and disables SysMain on SSDs."
-                                                   FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" LineHeight="16" Margin="0,6,0,0"/>
+                                    <StackPanel Grid.Row="1" Margin="0,8,0,14">
+                                        <TextBlock Text="Laptop Efficiency" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                        <TextBlock Text="Fixes Modern Standby sleep drain, prevents WiFi power droop on battery, and suspends high-CPU telemetry daemons."
+                                                   FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" LineHeight="15" Margin="0,4,0,0"/>
                                     </StackPanel>
                                     <Button Grid.Row="2"
-                                            Content="Load Gaming Preset"
-                                            Click="PresetGaming_Click"
+                                            Content="Load Laptop Preset"
+                                            Click="PresetLaptop_Click"
                                             Style="{StaticResource AppleButton}"/>
                                 </Grid>
                             </Border>
 
-                            <!-- Preset 3: Maximum Strip -->
+                            <!-- Preset 3: Pro Gaming -->
                             <Border Grid.Column="2" Style="{StaticResource AppleCardStyle}" Margin="6,0,6,0">
                                 <Grid>
                                     <Grid.RowDefinitions>
@@ -480,19 +566,19 @@
                                         <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
                                     <StackPanel Orientation="Horizontal">
-                                        <Border Background="{DynamicResource RiskyBadgeBgBrush}" CornerRadius="6" Padding="6,2">
-                                            <TextBlock Text="RISKY" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource RiskyBadgeBrush}"/>
+                                        <Border Background="{DynamicResource CautionBadgeBgBrush}" CornerRadius="6" Padding="6,2">
+                                            <TextBlock Text="50/50" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource CautionBadgeBrush}"/>
                                         </Border>
-                                        <TextBlock Text="Ultra Stripped" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="8,2,0,0"/>
+                                        <TextBlock Text="Gaming Latency" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="8,2,0,0"/>
                                     </StackPanel>
-                                    <StackPanel Grid.Row="1" Margin="0,10,0,16">
-                                        <TextBlock Text="Maximum Strip" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                        <TextBlock Text="Unlocks Ultimate Performance ACPI power scheme, locks kernel in RAM, and strips non-essential services. For high-end desktops."
-                                                   FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" LineHeight="16" Margin="0,6,0,0"/>
+                                    <StackPanel Grid.Row="1" Margin="0,8,0,14">
+                                        <TextBlock Text="Pro Gaming Latency" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                        <TextBlock Text="Eliminates GameDVR micro-stutter, optimizes MMCSS network packets, enforces 1:1 raw mouse tracking, and disables SysMain."
+                                                   FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" LineHeight="15" Margin="0,4,0,0"/>
                                     </StackPanel>
                                     <Button Grid.Row="2"
-                                            Content="Load Ultra Preset"
-                                            Click="PresetUltra_Click"
+                                            Content="Load Gaming Preset"
+                                            Click="PresetGaming_Click"
                                             Style="{StaticResource AppleButton}"/>
                                 </Grid>
                             </Border>
@@ -507,14 +593,14 @@
                                     </Grid.RowDefinitions>
                                     <StackPanel Orientation="Horizontal">
                                         <Border Background="{DynamicResource PillBgBrush}" CornerRadius="6" Padding="6,2">
-                                            <TextBlock Text="STOCK" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                            <TextBlock Text="STOCK" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}"/>
                                         </Border>
-                                        <TextBlock Text="Reset" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="8,2,0,0"/>
+                                        <TextBlock Text="Rollback" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="8,2,0,0"/>
                                     </StackPanel>
-                                    <StackPanel Grid.Row="1" Margin="0,10,0,16">
-                                        <TextBlock Text="Revert to Defaults" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                        <TextBlock Text="Restores Microsoft default registry keys, enables stock telemetry and Windows default background services safely."
-                                                   FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" LineHeight="16" Margin="0,6,0,0"/>
+                                    <StackPanel Grid.Row="1" Margin="0,8,0,14">
+                                        <TextBlock Text="Revert to Defaults" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                        <TextBlock Text="Restores Microsoft stock registry keys, enables default telemetry and standard background services safely."
+                                                   FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" LineHeight="15" Margin="0,4,0,0"/>
                                     </StackPanel>
                                     <Button Grid.Row="2"
                                             Content="Revert All Tweaks"
@@ -524,14 +610,13 @@
                             </Border>
                         </Grid>
 
-                        <!-- Quick Maintenance & Disk Section -->
+                        <!-- Quick Storage Reclaim Section -->
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
-                            <!-- Clean Cache Card -->
                             <Border Grid.Column="0" Style="{StaticResource AppleCardStyle}" Margin="0,0,6,0">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -540,7 +625,7 @@
                                     </Grid.ColumnDefinitions>
                                     <StackPanel>
                                         <TextBlock Text="Purge System Temp Caches &amp; Flush DNS" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                        <TextBlock Text="Safely cleans Windows Temp, User Temp, Prefetch, and flushes network DNS cache." FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                                        <TextBlock Text="Safely cleans Windows Temp, User Temp, Prefetch, and flushes network DNS cache." FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,3,0,0"/>
                                     </StackPanel>
                                     <Button Grid.Column="1"
                                             Content="Purge Now"
@@ -550,7 +635,6 @@
                                 </Grid>
                             </Border>
 
-                            <!-- Disable Hibernation Card -->
                             <Border Grid.Column="1" Style="{StaticResource AppleCardStyle}" Margin="6,0,0,0">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -559,7 +643,7 @@
                                     </Grid.ColumnDefinitions>
                                     <StackPanel>
                                         <TextBlock Text="Reclaim SSD Storage (Disable Hibernation)" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                        <TextBlock Text="Deletes hiberfil.sys to immediately free 8GB to 32GB of SSD disk space." FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                                        <TextBlock Text="Deletes hiberfil.sys to immediately free 8GB to 32GB of SSD disk space." FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,3,0,0"/>
                                     </StackPanel>
                                     <Button Grid.Column="1"
                                             Content="Free Storage"
@@ -573,8 +657,8 @@
                 </ScrollViewer>
             </Grid>
 
-            <!-- TAB 2, 3, 4: LIST OF OPTIMIZATIONS (Windows 11, Windows 10, Universal) -->
-            <Grid Visibility="{Binding ActiveTab, Converter={StaticResource TabVisibilityConverter}, ConverterParameter=List}">
+            <!-- TAB 2: UNIFIED TWEAKS (Auto-detects and hides incompatible OS tweaks) -->
+            <Grid Visibility="{Binding ActiveTab, Converter={StaticResource TabVisibilityConverter}, ConverterParameter=Tweaks}">
                 <Grid.RowDefinitions>
                     <!-- Filter and Search Bar -->
                     <RowDefinition Height="Auto"/>
@@ -584,88 +668,92 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <!-- Filter & Search Toolbar -->
+                <!-- Filter Toolbar -->
                 <Border Grid.Row="0"
                         Style="{StaticResource AppleCardStyle}"
                         Padding="14,10"
-                        Margin="0,0,0,12">
+                        Margin="0,0,0,10">
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <!-- Risk Filter Pills -->
                             <ColumnDefinition Width="Auto"/>
-                            <!-- Spacer -->
                             <ColumnDefinition Width="*"/>
-                            <!-- Search Box -->
                             <ColumnDefinition Width="260"/>
                         </Grid.ColumnDefinitions>
 
-                        <!-- Risk Badges Filter Pills -->
+                        <!-- Filter Pills -->
                         <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="Filter by Risk:" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                            <RadioButton Content="All"
+                            <TextBlock Text="Filter:" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <RadioButton Content="All Compatible"
                                          GroupName="RiskFilter"
                                          IsChecked="True"
                                          Tag="All"
                                          Click="RiskFilter_Click"
                                          Style="{StaticResource RiskFilterPillStyle}"/>
-                            <RadioButton Content="Safe"
+                            <RadioButton Content="🟢 Safe"
                                          GroupName="RiskFilter"
                                          Tag="Safe"
                                          Click="RiskFilter_Click"
                                          Style="{StaticResource RiskFilterPillStyle}"/>
-                            <RadioButton Content="50/50 Caution"
+                            <RadioButton Content="🟡 50/50 Caution"
                                          GroupName="RiskFilter"
                                          Tag="Caution"
                                          Click="RiskFilter_Click"
                                          Style="{StaticResource RiskFilterPillStyle}"/>
-                            <RadioButton Content="Risky"
+                            <RadioButton Content="🔴 Risky"
                                          GroupName="RiskFilter"
                                          Tag="Risky"
                                          Click="RiskFilter_Click"
                                          Style="{StaticResource RiskFilterPillStyle}"/>
+                            <RadioButton Content="💻 Laptop Battery"
+                                         GroupName="RiskFilter"
+                                         Tag="Laptop"
+                                         Click="RiskFilter_Click"
+                                         Style="{StaticResource RiskFilterPillStyle}"/>
+                            <RadioButton Content="🎯 Gaming"
+                                         GroupName="RiskFilter"
+                                         Tag="Gaming"
+                                         Click="RiskFilter_Click"
+                                         Style="{StaticResource RiskFilterPillStyle}"/>
                         </StackPanel>
 
-                        <!-- Search Input Box -->
+                        <!-- Instant Search Box -->
                         <TextBox Grid.Column="2"
                                  Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource AppleSearchBox}"
-                                 ToolTip="Search tweaks by title, keyword, or trade-off"/>
+                                 ToolTip="Search tweaks by title, description, or keyword"/>
                     </Grid>
                 </Border>
 
-                <!-- Items List -->
+                <!-- Unified Tweaks List -->
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <ItemsControl ItemsSource="{Binding FilteredOptimizations}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type models:OptimizationItem}">
-                                <Border Style="{StaticResource AppleCardStyle}" Margin="0,0,0,8" Padding="16,14">
+                                <Border Style="{StaticResource AppleCardStyle}" Margin="0,0,0,8" Padding="16,12">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
-                                            <!-- Checkbox for selection -->
                                             <ColumnDefinition Width="Auto"/>
-                                            <!-- Title & Details -->
                                             <ColumnDefinition Width="*"/>
-                                            <!-- Status & Quick Action -->
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
 
-                                        <!-- Selection Checkbox -->
+                                        <!-- Checkbox -->
                                         <CheckBox Grid.Column="0"
                                                   IsChecked="{Binding IsSelected}"
                                                   Style="{StaticResource AppleCheckBox}"
                                                   VerticalAlignment="Center"
                                                   Margin="0,0,14,0"/>
 
-                                        <!-- Title, Risk Badge, Description, and Tradeoff -->
+                                        <!-- Tweak Information -->
                                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                             <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                                                <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                                <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
 
                                                 <!-- Risk Badge -->
                                                 <Border Background="{Binding Risk, Converter={StaticResource RiskToBgConverter}}"
-                                                        CornerRadius="6"
+                                                        CornerRadius="5"
                                                         Padding="6,2"
-                                                        Margin="10,0,0,0"
+                                                        Margin="8,0,0,0"
                                                         VerticalAlignment="Center">
                                                     <TextBlock Text="{Binding RiskBadgeText}"
                                                                FontSize="10"
@@ -673,28 +761,36 @@
                                                                Foreground="{Binding Risk, Converter={StaticResource RiskToColorConverter}}"/>
                                                 </Border>
 
-                                                <!-- Requires Restart Tag if any -->
+                                                <!-- Category Badge -->
                                                 <Border Background="{DynamicResource PillBgBrush}"
-                                                        CornerRadius="6"
+                                                        CornerRadius="5"
                                                         Padding="6,2"
                                                         Margin="6,0,0,0"
-                                                        Visibility="{Binding RequiresRestart, Converter={StaticResource BooleanToVisibilityConverter}}"
                                                         VerticalAlignment="Center">
-                                                    <TextBlock Text="Explorer Restart" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                                    <TextBlock Text="{Binding CategoryBadgeText}" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                                </Border>
+
+                                                <!-- OS Tag Badge -->
+                                                <Border Background="{DynamicResource PillBgBrush}"
+                                                        CornerRadius="5"
+                                                        Padding="6,2"
+                                                        Margin="6,0,0,0"
+                                                        VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding OsBadgeText}" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
                                                 </Border>
                                             </StackPanel>
 
                                             <!-- Description -->
-                                            <TextBlock Text="{Binding Description}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" LineHeight="16"/>
+                                            <TextBlock Text="{Binding Description}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" LineHeight="15"/>
 
-                                            <!-- Tradeoff Note -->
-                                            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                            <!-- Tradeoff -->
+                                            <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
                                                 <TextBlock Text="Trade-off: " FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}"/>
                                                 <TextBlock Text="{Binding Tradeoff}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap"/>
                                             </StackPanel>
                                         </StackPanel>
 
-                                        <!-- Status Indicator and Quick Actions -->
+                                        <!-- Status Indicator & Quick Action Buttons -->
                                         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,0,0">
                                             <!-- Status Pill -->
                                             <Border CornerRadius="6" Padding="8,4" Margin="0,0,10,0" VerticalAlignment="Center">
@@ -757,14 +853,11 @@
                         BorderThickness="1"
                         CornerRadius="12"
                         Padding="16,12"
-                        Margin="0,12,0,0">
+                        Margin="0,10,0,0">
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <!-- Bulk selection buttons -->
                             <ColumnDefinition Width="Auto"/>
-                            <!-- Spacer -->
                             <ColumnDefinition Width="*"/>
-                            <!-- Execution buttons -->
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
@@ -797,7 +890,7 @@
                 </Border>
             </Grid>
 
-            <!-- TAB 5: DEBLOAT APPS -->
+            <!-- TAB 3: FRIENDLY DEBLOAT APPS -->
             <Grid Visibility="{Binding ActiveTab, Converter={StaticResource TabVisibilityConverter}, ConverterParameter=Debloat}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -805,45 +898,106 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <!-- Header Banner -->
-                <Border Grid.Row="0" Style="{StaticResource AppleCardStyle}" Padding="16,12" Margin="0,0,0,12">
+                <!-- Friendly Header Banner -->
+                <Border Grid.Row="0" Style="{StaticResource AppleCardStyle}" Padding="18,14" Margin="0,0,0,12">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel>
-                            <TextBlock Text="UWP Consumer Bloatware Remover" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                            <TextBlock Text="Removes unnecessary pre-installed Windows Store packages, promotional apps, and background sync agents." FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                            <TextBlock Text="🗑️ Friendly Windows App Debloater" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock Text="Safely uninstalls pre-installed consumer bloatware and sponsored store apps. Every app can be reinstalled from Microsoft Store at any time."
+                                       FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,3,0,0"/>
                         </StackPanel>
-                        <Button Grid.Column="1"
-                                Content="Clean System Temp Caches"
-                                Click="CleanTemp_Click"
-                                Style="{StaticResource AppleSecondaryButton}"
-                                VerticalAlignment="Center"/>
+                        <!-- 3 Quick Selection Presets -->
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Content="Select Recommended"
+                                    Click="DebloatSelectRecommended_Click"
+                                    Style="{StaticResource AppleSecondaryButton}"
+                                    Padding="12,6"
+                                    FontSize="11"
+                                    Margin="0,0,6,0"/>
+                            <Button Content="Select All"
+                                    Click="DebloatSelectAll_Click"
+                                    Style="{StaticResource AppleSecondaryButton}"
+                                    Padding="12,6"
+                                    FontSize="11"
+                                    Margin="0,0,6,0"/>
+                            <Button Content="Deselect All"
+                                    Click="DebloatDeselectAll_Click"
+                                    Style="{StaticResource AppleSecondaryButton}"
+                                    Padding="12,6"
+                                    FontSize="11"/>
+                        </StackPanel>
                     </Grid>
                 </Border>
 
-                <!-- Bloatware Items List -->
+                <!-- Friendly Category Cards List -->
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                    <ItemsControl ItemsSource="{Binding BloatwareList}">
+                    <ItemsControl ItemsSource="{Binding BloatwareCategories}">
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate DataType="{x:Type services:BloatPackageItem}">
-                                <Border Style="{StaticResource AppleCardStyle}" Margin="0,0,0,8" Padding="16,12">
+                            <DataTemplate DataType="{x:Type services:FriendlyBloatCategory}">
+                                <Border Style="{StaticResource AppleCardStyle}" Margin="0,0,0,8" Padding="16,14">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
+                                            <!-- Checkbox -->
                                             <ColumnDefinition Width="Auto"/>
+                                            <!-- Icon -->
+                                            <ColumnDefinition Width="Auto"/>
+                                            <!-- Details -->
                                             <ColumnDefinition Width="*"/>
+                                            <!-- Safety Badge -->
+                                            <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
+
                                         <CheckBox Grid.Column="0"
                                                   IsChecked="{Binding IsSelected}"
                                                   Style="{StaticResource AppleCheckBox}"
                                                   VerticalAlignment="Center"
-                                                  Margin="0,0,14,0"/>
-                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                                  Margin="0,0,12,0"/>
+
+                                        <TextBlock Grid.Column="1" Text="{Binding IconSymbol}" FontSize="22" VerticalAlignment="Center" Margin="0,0,14,0"/>
+
+                                        <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                            </StackPanel>
                                             <TextBlock Text="{Binding Description}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,2,0,0"/>
+                                            <TextBlock Text="{Binding ImpactDescription}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,3,0,0" FontStyle="Italic"/>
                                         </StackPanel>
+
+                                        <Border Grid.Column="3"
+                                                CornerRadius="6"
+                                                Padding="8,4"
+                                                VerticalAlignment="Center">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding RiskBadge}" Value="SAFE">
+                                                            <Setter Property="Background" Value="{DynamicResource SafeBadgeBgBrush}"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding RiskBadge}" Value="50/50 CAUTION">
+                                                            <Setter Property="Background" Value="{DynamicResource CautionBadgeBgBrush}"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock Text="{Binding RiskBadge}" FontSize="10" FontWeight="Bold">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding RiskBadge}" Value="SAFE">
+                                                                <Setter Property="Foreground" Value="{DynamicResource SafeBadgeBrush}"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding RiskBadge}" Value="50/50 CAUTION">
+                                                                <Setter Property="Foreground" Value="{DynamicResource CautionBadgeBrush}"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Border>
                                     </Grid>
                                 </Border>
                             </DataTemplate>
@@ -858,34 +1012,34 @@
                         BorderThickness="1"
                         CornerRadius="12"
                         Padding="16,12"
-                        Margin="0,12,0,0">
+                        Margin="0,10,0,0">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="Select packages above and click to purge for all users." FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                        <TextBlock Text="Removes selected applications for all users to reclaim disk space and background RAM."
+                                   FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
                         <Button Grid.Column="1"
-                                Content="Purge Selected Bloatware"
+                                Content="Uninstall Selected Apps"
                                 Click="PurgeBloatware_Click"
                                 Style="{StaticResource AppleButton}"
-                                Padding="20,8"/>
+                                Padding="22,8"/>
                     </Grid>
                 </Border>
             </Grid>
 
-            <!-- TAB 6: SETTINGS & LOGS -->
+            <!-- TAB 4: SETTINGS & LOGS -->
             <Grid Visibility="{Binding ActiveTab, Converter={StaticResource TabVisibilityConverter}, ConverterParameter=Settings}">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel>
 
-                        <!-- Themes & Appearance Card -->
-                        <Border Style="{StaticResource AppleCardStyle}" Padding="20" Margin="0,0,0,16">
+                        <!-- Themes Card -->
+                        <Border Style="{StaticResource AppleCardStyle}" Padding="20" Margin="0,0,0,14">
                             <StackPanel>
                                 <TextBlock Text="APPEARANCE &amp; THEMES" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}"/>
 
-                                <!-- Themes Selection -->
-                                <TextBlock Text="Interface Theme" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,12,0,8"/>
+                                <TextBlock Text="Theme" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,10,0,6"/>
                                 <StackPanel Orientation="Horizontal">
                                     <RadioButton Content="Cupertino Dark"
                                                  GroupName="ThemeGroup"
@@ -910,23 +1064,22 @@
                                                  Style="{StaticResource RiskFilterPillStyle}"/>
                                 </StackPanel>
 
-                                <!-- Accent Color Selection -->
-                                <TextBlock Text="Accent Highlight Color" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,16,0,8"/>
+                                <TextBlock Text="Accent Highlight Color" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,14,0,6"/>
                                 <StackPanel Orientation="Horizontal">
-                                    <RadioButton Content="Apple Blue"
+                                    <RadioButton Content="Zenith Purple"
                                                  GroupName="AccentGroup"
                                                  IsChecked="True"
+                                                 Tag="RoyalViolet"
+                                                 Click="AccentSelector_Click"
+                                                 Style="{StaticResource RiskFilterPillStyle}"/>
+                                    <RadioButton Content="Apple Blue"
+                                                 GroupName="AccentGroup"
                                                  Tag="AppleBlue"
                                                  Click="AccentSelector_Click"
                                                  Style="{StaticResource RiskFilterPillStyle}"/>
                                     <RadioButton Content="Cyber Emerald"
                                                  GroupName="AccentGroup"
                                                  Tag="EmeraldGreen"
-                                                 Click="AccentSelector_Click"
-                                                 Style="{StaticResource RiskFilterPillStyle}"/>
-                                    <RadioButton Content="Royal Violet"
-                                                 GroupName="AccentGroup"
-                                                 Tag="RoyalViolet"
                                                  Click="AccentSelector_Click"
                                                  Style="{StaticResource RiskFilterPillStyle}"/>
                                     <RadioButton Content="Sunset Amber"
@@ -943,17 +1096,27 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- Brand Logo Customization Info Card -->
-                        <Border Style="{StaticResource AppleCardStyle}" Padding="20" Margin="0,0,0,16">
+                        <!-- Hardware Audit Log Details -->
+                        <Border Style="{StaticResource AppleCardStyle}" Padding="20" Margin="0,0,0,14">
                             <StackPanel>
-                                <TextBlock Text="BRANDING &amp; CUSTOM LOGO" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                                <TextBlock Text="Custom Logo Replacement" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,10,0,4"/>
-                                <TextBlock Text="To customize the brand logo with your own image, place a square PNG or ICO file named 'logo.png' in the same folder as this application. Zenith Optimizer will automatically load and display your custom branding upon launch."
-                                           FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" LineHeight="18"/>
+                                <TextBlock Text="HARDWARE AUDIT DIAGNOSTIC SUMMARY" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                <Border Background="{DynamicResource SegmentedTabBgBrush}"
+                                        BorderBrush="{DynamicResource CardBorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="8"
+                                        Padding="12"
+                                        Margin="0,10,0,0">
+                                    <TextBlock Text="{Binding Metrics.SmartAuditSummary}"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               FontSize="11"
+                                               FontFamily="Consolas, Cascadia Code, Courier New"
+                                               TextWrapping="Wrap"
+                                               LineHeight="16"/>
+                                </Border>
                             </StackPanel>
                         </Border>
 
-                        <!-- Diagnostic Execution Logs -->
+                        <!-- Execution Logs -->
                         <Border Style="{StaticResource AppleCardStyle}" Padding="20">
                             <StackPanel>
                                 <Grid Margin="0,0,0,10">
@@ -970,7 +1133,7 @@
                                         BorderThickness="1"
                                         CornerRadius="8"
                                         Padding="12"
-                                        Height="220">
+                                        Height="200">
                                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                                         <TextBox Text="{Binding StatusLog, Mode=OneWay}"
                                                  IsReadOnly="True"

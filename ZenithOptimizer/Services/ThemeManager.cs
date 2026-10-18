@@ -14,9 +14,9 @@ namespace ZenithOptimizer.Services
 
     public enum AccentColor
     {
+        RoyalViolet, // Signature Zenith Purple matching logo
         AppleBlue,
         EmeraldGreen,
-        RoyalViolet,
         SunsetAmber,
         CoralCrimson
     }
@@ -30,66 +30,66 @@ namespace ZenithOptimizer.Services
             // Accent brush
             Color accentColor = accent switch
             {
+                AccentColor.RoyalViolet => (Color)ColorConverter.ConvertFromString("#9333EA"), // Zenith Purple
                 AccentColor.AppleBlue => (Color)ColorConverter.ConvertFromString("#0A84FF"),
                 AccentColor.EmeraldGreen => (Color)ColorConverter.ConvertFromString("#10B981"),
-                AccentColor.RoyalViolet => (Color)ColorConverter.ConvertFromString("#8B5CF6"),
                 AccentColor.SunsetAmber => (Color)ColorConverter.ConvertFromString("#F59E0B"),
                 AccentColor.CoralCrimson => (Color)ColorConverter.ConvertFromString("#EF4444"),
-                _ => (Color)ColorConverter.ConvertFromString("#0A84FF")
+                _ => (Color)ColorConverter.ConvertFromString("#9333EA")
             };
 
             dict["AccentBrush"] = new SolidColorBrush(accentColor);
             dict["AccentBrushLight"] = new SolidColorBrush(Color.FromArgb(40, accentColor.R, accentColor.G, accentColor.B));
-            dict["AccentBrushHover"] = new SolidColorBrush(Color.FromArgb(200, accentColor.R, accentColor.G, accentColor.B));
+            dict["AccentBrushHover"] = new SolidColorBrush(Color.FromArgb(215, accentColor.R, accentColor.G, accentColor.B));
 
             switch (theme)
             {
                 case AppTheme.CupertinoDark:
-                    SetBrush(dict, "BackgroundBrush", "#18181B");
-                    SetBrush(dict, "CardBrush", "#222227");
-                    SetBrush(dict, "CardHoverBrush", "#292930");
-                    SetBrush(dict, "CardBorderBrush", "#2E2E35");
-                    SetBrush(dict, "TextPrimaryBrush", "#F4F4F5");
-                    SetBrush(dict, "TextSecondaryBrush", "#A1A1AA");
-                    SetBrush(dict, "SegmentedTabBgBrush", "#1F1F24");
-                    SetBrush(dict, "SegmentedTabActiveBrush", "#2E2E36");
-                    SetBrush(dict, "PillBgBrush", "#27272A");
+                    SetBrush(dict, "BackgroundBrush", "#141417");
+                    SetBrush(dict, "CardBrush", "#1C1C21");
+                    SetBrush(dict, "CardHoverBrush", "#25252C");
+                    SetBrush(dict, "CardBorderBrush", "#2C2C35");
+                    SetBrush(dict, "TextPrimaryBrush", "#F8FAFC");
+                    SetBrush(dict, "TextSecondaryBrush", "#94A3B8");
+                    SetBrush(dict, "SegmentedTabBgBrush", "#18181E");
+                    SetBrush(dict, "SegmentedTabActiveBrush", "#262632");
+                    SetBrush(dict, "PillBgBrush", "#22222B");
                     break;
 
                 case AppTheme.CupertinoLight:
-                    SetBrush(dict, "BackgroundBrush", "#F4F4F7");
+                    SetBrush(dict, "BackgroundBrush", "#F8FAFC");
                     SetBrush(dict, "CardBrush", "#FFFFFF");
-                    SetBrush(dict, "CardHoverBrush", "#FAFAFC");
-                    SetBrush(dict, "CardBorderBrush", "#E4E4E8");
-                    SetBrush(dict, "TextPrimaryBrush", "#18181B");
-                    SetBrush(dict, "TextSecondaryBrush", "#71717A");
-                    SetBrush(dict, "SegmentedTabBgBrush", "#EAEAEF");
+                    SetBrush(dict, "CardHoverBrush", "#F1F5F9");
+                    SetBrush(dict, "CardBorderBrush", "#E2E8F0");
+                    SetBrush(dict, "TextPrimaryBrush", "#0F172A");
+                    SetBrush(dict, "TextSecondaryBrush", "#64748B");
+                    SetBrush(dict, "SegmentedTabBgBrush", "#E2E8F0");
                     SetBrush(dict, "SegmentedTabActiveBrush", "#FFFFFF");
-                    SetBrush(dict, "PillBgBrush", "#E4E4E7");
+                    SetBrush(dict, "PillBgBrush", "#F1F5F9");
                     break;
 
                 case AppTheme.MidnightSlate:
-                    SetBrush(dict, "BackgroundBrush", "#0B0F17");
-                    SetBrush(dict, "CardBrush", "#131B26");
-                    SetBrush(dict, "CardHoverBrush", "#1A2433");
-                    SetBrush(dict, "CardBorderBrush", "#1E293B");
-                    SetBrush(dict, "TextPrimaryBrush", "#F8FAFC");
-                    SetBrush(dict, "TextSecondaryBrush", "#94A3B8");
-                    SetBrush(dict, "SegmentedTabBgBrush", "#0F1622");
-                    SetBrush(dict, "SegmentedTabActiveBrush", "#1E293B");
-                    SetBrush(dict, "PillBgBrush", "#172231");
+                    SetBrush(dict, "BackgroundBrush", "#090D14");
+                    SetBrush(dict, "CardBrush", "#111827");
+                    SetBrush(dict, "CardHoverBrush", "#1A2234");
+                    SetBrush(dict, "CardBorderBrush", "#1F2937");
+                    SetBrush(dict, "TextPrimaryBrush", "#F9FAFB");
+                    SetBrush(dict, "TextSecondaryBrush", "#9CA3AF");
+                    SetBrush(dict, "SegmentedTabBgBrush", "#0D131F");
+                    SetBrush(dict, "SegmentedTabActiveBrush", "#1F2937");
+                    SetBrush(dict, "PillBgBrush", "#192231");
                     break;
 
                 case AppTheme.GraphiteMinimal:
-                    SetBrush(dict, "BackgroundBrush", "#111111");
-                    SetBrush(dict, "CardBrush", "#1C1C1C");
-                    SetBrush(dict, "CardHoverBrush", "#242424");
-                    SetBrush(dict, "CardBorderBrush", "#2C2C2C");
-                    SetBrush(dict, "TextPrimaryBrush", "#E5E5E5");
+                    SetBrush(dict, "BackgroundBrush", "#101010");
+                    SetBrush(dict, "CardBrush", "#181818");
+                    SetBrush(dict, "CardHoverBrush", "#202020");
+                    SetBrush(dict, "CardBorderBrush", "#282828");
+                    SetBrush(dict, "TextPrimaryBrush", "#EDEDED");
                     SetBrush(dict, "TextSecondaryBrush", "#888888");
-                    SetBrush(dict, "SegmentedTabBgBrush", "#171717");
-                    SetBrush(dict, "SegmentedTabActiveBrush", "#2A2A2A");
-                    SetBrush(dict, "PillBgBrush", "#222222");
+                    SetBrush(dict, "SegmentedTabBgBrush", "#141414");
+                    SetBrush(dict, "SegmentedTabActiveBrush", "#242424");
+                    SetBrush(dict, "PillBgBrush", "#1D1D1D");
                     break;
             }
 
@@ -106,18 +106,7 @@ namespace ZenithOptimizer.Services
 
         private static void SetBrush(ResourceDictionary dict, string key, string hexColor)
         {
-            if (hexColor.StartsWith("#1F") && hexColor.Length == 9)
-            {
-                byte a = Convert.ToByte(hexColor.Substring(1, 2), 16);
-                byte r = Convert.ToByte(hexColor.Substring(3, 2), 16);
-                byte g = Convert.ToByte(hexColor.Substring(5, 2), 16);
-                byte b = Convert.ToByte(hexColor.Substring(7, 2), 16);
-                dict[key] = new SolidColorBrush(Color.FromArgb(a, r, g, b));
-            }
-            else
-            {
-                dict[key] = new SolidColorBrush((Color)ColorConverter.ConvertFromString(hexColor));
-            }
+            dict[key] = new SolidColorBrush((Color)ColorConverter.ConvertFromString(hexColor));
         }
     }
 }

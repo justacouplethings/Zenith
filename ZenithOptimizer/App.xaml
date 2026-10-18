@@ -22,10 +22,10 @@
         <SolidColorBrush x:Key="SegmentedTabActiveBrush" Color="#2E2E36"/>
         <SolidColorBrush x:Key="PillBgBrush" Color="#27272A"/>
 
-        <!-- Default Accent -->
-        <SolidColorBrush x:Key="AccentBrush" Color="#0A84FF"/>
-        <SolidColorBrush x:Key="AccentBrushLight" Color="#280A84FF"/>
-        <SolidColorBrush x:Key="AccentBrushHover" Color="#C80A84FF"/>
+        <!-- Default Accent: Signature Zenith Purple -->
+        <SolidColorBrush x:Key="AccentBrush" Color="#9333EA"/>
+        <SolidColorBrush x:Key="AccentBrushLight" Color="#289333EA"/>
+        <SolidColorBrush x:Key="AccentBrushHover" Color="#C89333EA"/>
 
         <!-- Risk Badges -->
         <SolidColorBrush x:Key="SafeBadgeBrush" Color="#10B981"/>
@@ -35,8 +35,8 @@
         <SolidColorBrush x:Key="RiskyBadgeBrush" Color="#EF4444"/>
         <SolidColorBrush x:Key="RiskyBadgeBgBrush" Color="#1FEF4444"/>
 
-        <!-- Fonts -->
-        <FontFamily x:Key="AppleFont">Segoe UI Variable Display, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif</FontFamily>
+        <!-- Fonts: Clean Windows Native System Typography -->
+        <FontFamily x:Key="AppleFont">Segoe UI, Segoe UI Variable Text, Arial, sans-serif</FontFamily>
 
         <!-- Apple Style Button -->
         <Style x:Key="AppleButton" TargetType="Button">

@@ -15,12 +15,19 @@ namespace ZenithOptimizer.Models
         private string _uptimeString = "00:00:00";
         private int _batteryPercent = 100;
         private bool _isLaptop = false;
+        private bool _isUserLaptopMode = false;
         private bool _isCharging = true;
         private string _osName = "Windows";
         private string _osBuild = "";
+        private int _osBuildNumber = 0;
+        private int _cpuCores = Environment.ProcessorCount;
+        private bool _isSsd = true;
+        private string _diskType = "SSD Storage";
         private int _optimizationScore = 0;
         private int _totalAppliedTweaks = 0;
         private int _totalAvailableTweaks = 0;
+        private bool _isRestorePointCreated = false;
+        private string _smartAuditSummary = "System ready for hardware audit.";
 
         public float CpuUsage
         {
@@ -73,8 +80,25 @@ namespace ZenithOptimizer.Models
         public bool IsLaptop
         {
             get => _isLaptop;
-            set { _isLaptop = value; OnPropertyChanged(); }
+            set
+            {
+                _isLaptop = value;
+                OnPropertyChanged();
+            }
         }
+
+        public bool IsUserLaptopMode
+        {
+            get => _isUserLaptopMode;
+            set
+            {
+                _isUserLaptopMode = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(DeviceModeText));
+            }
+        }
+
+        public string DeviceModeText => IsUserLaptopMode ? "Laptop (Battery Profile)" : "Desktop (High Performance Profile)";
 
         public bool IsCharging
         {
@@ -94,6 +118,30 @@ namespace ZenithOptimizer.Models
             set { _osBuild = value; OnPropertyChanged(); }
         }
 
+        public int OsBuildNumber
+        {
+            get => _osBuildNumber;
+            set { _osBuildNumber = value; OnPropertyChanged(); }
+        }
+
+        public int CpuCores
+        {
+            get => _cpuCores;
+            set { _cpuCores = value; OnPropertyChanged(); }
+        }
+
+        public bool IsSsd
+        {
+            get => _isSsd;
+            set { _isSsd = value; OnPropertyChanged(); }
+        }
+
+        public string DiskType
+        {
+            get => _diskType;
+            set { _diskType = value; OnPropertyChanged(); }
+        }
+
         public int OptimizationScore
         {
             get => _optimizationScore;
@@ -111,6 +159,21 @@ namespace ZenithOptimizer.Models
             get => _totalAvailableTweaks;
             set { _totalAvailableTweaks = value; OnPropertyChanged(); }
         }
+
+        public bool IsRestorePointCreated
+        {
+            get => _isRestorePointCreated;
+            set { _isRestorePointCreated = value; OnPropertyChanged(); }
+        }
+
+        public string SmartAuditSummary
+        {
+            get => _smartAuditSummary;
+            set { _smartAuditSummary = value; OnPropertyChanged(); }
+        }
+
+        public bool IsWindows11 => OsBuildNumber >= 22000;
+        public bool IsWindows10 => OsBuildNumber < 22000;
 
         public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)

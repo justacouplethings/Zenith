@@ -14,6 +14,8 @@ namespace ZenithOptimizer.Models
         public string Id { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
         public OptimizationCategory Category { get; set; }
+        public OsTarget TargetOs { get; set; } = OsTarget.Universal;
+        public DeviceTarget TargetDevice { get; set; } = DeviceTarget.Universal;
         public RiskLevel Risk { get; set; }
         public string Description { get; set; } = string.Empty;
         public string Tradeoff { get; set; } = string.Empty;
@@ -84,12 +86,21 @@ namespace ZenithOptimizer.Models
             _ => "UNKNOWN"
         };
 
-        public string RiskTooltip => Risk switch
+        public string CategoryBadgeText => Category switch
         {
-            RiskLevel.Safe => "Recommended for all users. 100% reversible with zero adverse side effects.",
-            RiskLevel.Caution => "Trade-off exists. Disables convenience features that some users might rely on.",
-            RiskLevel.Risky => "High-impact tweak for gaming or extreme performance. Read trade-offs before applying.",
-            _ => ""
+            OptimizationCategory.SystemPerformance => "SYSTEM",
+            OptimizationCategory.PrivacyTelemetry => "PRIVACY",
+            OptimizationCategory.GamingLatency => "GAMING",
+            OptimizationCategory.LaptopBattery => "LAPTOP",
+            OptimizationCategory.InterfaceErgonomics => "INTERFACE",
+            _ => "TWEAK"
+        };
+
+        public string OsBadgeText => TargetOs switch
+        {
+            OsTarget.Windows11 => "Win 11 Only",
+            OsTarget.Windows10 => "Win 10 Only",
+            _ => "Universal"
         };
 
         public event PropertyChangedEventHandler? PropertyChanged;

@@ -21,12 +21,12 @@ namespace ZenithOptimizer.ViewModels
         private string _busyStatus = string.Empty;
         private string _statusLog = "System ready. Welcome to Zenith Optimizer.\n";
         private AppTheme _currentTheme = AppTheme.CupertinoDark;
-        private AccentColor _currentAccent = AccentColor.AppleBlue;
+        private AccentColor _currentAccent = AccentColor.RoyalViolet; // Zenith Purple default
 
         public SystemMetrics Metrics { get; } = new SystemMetrics();
         public ObservableCollection<OptimizationItem> AllOptimizations { get; } = new ObservableCollection<OptimizationItem>();
         public ICollectionView FilteredOptimizations { get; }
-        public ObservableCollection<BloatPackageItem> BloatwareList { get; } = new ObservableCollection<BloatPackageItem>();
+        public ObservableCollection<FriendlyBloatCategory> BloatwareCategories { get; } = new ObservableCollection<FriendlyBloatCategory>();
 
         public string ActiveTab
         {
@@ -127,56 +127,66 @@ namespace ZenithOptimizer.ViewModels
                 AllOptimizations.Add(opt);
             }
 
-            // Load Bloatware list
-            var bloat = DebloatService.GetDefaultBloatwareList();
+            // Load Friendly Bloatware categories
+            var bloat = DebloatService.GetFriendlyBloatwareCategories();
             foreach (var b in bloat)
             {
-                BloatwareList.Add(b);
+                BloatwareCategories.Add(b);
             }
 
             // Setup CollectionView filtering
             FilteredOptimizations = CollectionViewSource.GetDefaultView(AllOptimizations);
             FilteredOptimizations.Filter = FilterOptimization;
 
-            // Initial state check in background
-            Task.Run(RefreshAllStates);
+            // Run initial status check and hardware audit recommendation
+            Task.Run(async () =>
+            {
+                await RefreshAllStates();
+                RunHardwareAuditSilently();
+            });
         }
 
         private bool FilterOptimization(object obj)
         {
             if (obj is not OptimizationItem item) return false;
 
-            // 1. Tab filter
-            bool matchTab = ActiveTab switch
-            {
-                "Dashboard" => false, // Dashboard displays summary cards
-                "Win11" => item.Category == OptimizationCategory.Windows11,
-                "Win10" => item.Category == OptimizationCategory.Windows10,
-                "Universal" => item.Category == OptimizationCategory.UniversalPrivacy ||
-                               item.Category == OptimizationCategory.UniversalSystem ||
-                               item.Category == OptimizationCategory.UniversalGaming,
-                "All" => true,
-                _ => true
-            };
-            if (!matchTab) return false;
+            // 1. Only display in Tweaks tab
+            if (ActiveTab != "Tweaks" && ActiveTab != "All") return false;
 
-            // 2. Risk filter
-            bool matchRisk = SelectedRiskFilter switch
+            // 2. Automatic OS Compatibility Filtering:
+            // If running on Windows 11, hide Windows 10 tweaks completely
+            if (Metrics.IsWindows11 && item.TargetOs == OsTarget.Windows10) return false;
+            // If running on Windows 10, hide Windows 11 tweaks completely
+            if (Metrics.IsWindows10 && item.TargetOs == OsTarget.Windows11) return false;
+
+            // 3. Device Profile Filtering:
+            // If in Laptop profile, hide DesktopOnly tweaks (like Ultimate ACPI scheme or hypervisor off if dangerous)
+            if (Metrics.IsUserLaptopMode && item.TargetDevice == DeviceTarget.DesktopOnly)
+            {
+                // In laptop mode, exclude pure desktop-only schemes unless explicitly searched
+                if (string.IsNullOrWhiteSpace(SearchQuery)) return false;
+            }
+
+            // 4. Risk / Category Filter
+            bool matchFilter = SelectedRiskFilter switch
             {
                 "Safe" => item.Risk == RiskLevel.Safe,
                 "Caution" => item.Risk == RiskLevel.Caution,
                 "Risky" => item.Risk == RiskLevel.Risky,
+                "Laptop" => item.Category == OptimizationCategory.LaptopBattery,
+                "Gaming" => item.Category == OptimizationCategory.GamingLatency,
                 _ => true
             };
-            if (!matchRisk) return false;
+            if (!matchFilter) return false;
 
-            // 3. Search query
+            // 5. Search query
             if (!string.IsNullOrWhiteSpace(SearchQuery))
             {
                 string query = SearchQuery.Trim().ToLowerInvariant();
                 return item.Title.ToLowerInvariant().Contains(query) ||
                        item.Description.ToLowerInvariant().Contains(query) ||
-                       item.Tradeoff.ToLowerInvariant().Contains(query);
+                       item.Tradeoff.ToLowerInvariant().Contains(query) ||
+                       item.CategoryBadgeText.ToLowerInvariant().Contains(query);
             }
 
             return true;
@@ -193,40 +203,91 @@ namespace ZenithOptimizer.ViewModels
             await Task.Run(() =>
             {
                 int applied = 0;
+                int compatibleTotal = 0;
+
                 foreach (var item in AllOptimizations)
                 {
                     item.RefreshStatus();
-                    if (item.IsApplied) applied++;
+
+                    // Count only compatible tweaks for the user's OS
+                    bool isCompatible = (Metrics.IsWindows11 && item.TargetOs != OsTarget.Windows10) ||
+                                       (Metrics.IsWindows10 && item.TargetOs != OsTarget.Windows11);
+
+                    if (isCompatible)
+                    {
+                        compatibleTotal++;
+                        if (item.IsApplied) applied++;
+                    }
                 }
 
-                Metrics.TotalAvailableTweaks = AllOptimizations.Count;
+                Metrics.TotalAvailableTweaks = compatibleTotal;
                 Metrics.TotalAppliedTweaks = applied;
-                Metrics.OptimizationScore = AllOptimizations.Count > 0 ? (int)((applied * 100.0) / AllOptimizations.Count) : 0;
+                Metrics.OptimizationScore = compatibleTotal > 0 ? (int)((applied * 100.0) / compatibleTotal) : 0;
             });
         }
+
+        public void ToggleDeviceProfile(bool isLaptop)
+        {
+            Metrics.IsUserLaptopMode = isLaptop;
+            AppendLog($"[Profile] Active Device Profile switched to: {(isLaptop ? "Laptop" : "Desktop")}");
+            FilteredOptimizations.Refresh();
+        }
+
+        #region Smart Audit
+        private void RunHardwareAuditSilently()
+        {
+            var (summary, _) = SmartAuditEngine.AnalyzeHardware(Metrics, AllOptimizations);
+            Metrics.SmartAuditSummary = summary;
+        }
+
+        public void RunSmartHardwareAudit()
+        {
+            var (summary, recommendedIds) = SmartAuditEngine.AnalyzeHardware(Metrics, AllOptimizations);
+            Metrics.SmartAuditSummary = summary;
+
+            // Auto-select recommended tweaks
+            foreach (var item in AllOptimizations)
+            {
+                item.IsSelected = recommendedIds.Contains(item.Id);
+            }
+
+            AppendLog("--- Smart Hardware Audit Completed ---");
+            AppendLog($"Audit applied: Selected {recommendedIds.Count} optimal tweaks tailored for your {Metrics.OsName} {(Metrics.IsUserLaptopMode ? "Laptop" : "Desktop")}.");
+            ActiveTab = "Tweaks";
+        }
+        #endregion
 
         #region Presets
         public void ApplyPreset(string presetName)
         {
-            AppendLog($"Loading preset: {presetName}");
-            foreach (var item in AllOptimizations)
-            {
-                item.IsSelected = false;
-            }
+            foreach (var item in AllOptimizations) item.IsSelected = false;
 
             switch (presetName)
             {
                 case "SafeDefault":
-                    // Select all Safe tweaks across all categories
                     foreach (var item in AllOptimizations.Where(x => x.Risk == RiskLevel.Safe))
                     {
+                        // Check OS compatibility
+                        if (Metrics.IsWindows11 && item.TargetOs == OsTarget.Windows10) continue;
+                        if (Metrics.IsWindows10 && item.TargetOs == OsTarget.Windows11) continue;
                         item.IsSelected = true;
                     }
-                    AppendLog("Preset loaded: Recommended Safe tweaks selected.");
+                    AppendLog("Preset loaded: Safe & Recommended tweaks selected.");
+                    break;
+
+                case "LaptopBattery":
+                    foreach (var item in AllOptimizations.Where(x =>
+                        x.Risk == RiskLevel.Safe &&
+                        x.TargetDevice != DeviceTarget.DesktopOnly))
+                    {
+                        if (Metrics.IsWindows11 && item.TargetOs == OsTarget.Windows10) continue;
+                        if (Metrics.IsWindows10 && item.TargetOs == OsTarget.Windows11) continue;
+                        item.IsSelected = true;
+                    }
+                    AppendLog("Preset loaded: Laptop Battery & Efficiency profile selected.");
                     break;
 
                 case "ProGaming":
-                    // All safe tweaks + Network throttling + GameDVR + SysMain
                     foreach (var item in AllOptimizations.Where(x =>
                         x.Risk == RiskLevel.Safe ||
                         x.Id == "uni_disable_gamedvr" ||
@@ -235,19 +296,22 @@ namespace ZenithOptimizer.ViewModels
                         x.Id == "uni_disable_sysmain" ||
                         x.Id == "w11_vbs_hypervisor"))
                     {
+                        if (Metrics.IsWindows11 && item.TargetOs == OsTarget.Windows10) continue;
+                        if (Metrics.IsWindows10 && item.TargetOs == OsTarget.Windows11) continue;
                         item.IsSelected = true;
                     }
                     AppendLog("Preset loaded: Pro Gaming & Low Latency tweaks selected.");
                     break;
 
                 case "MaximumStrip":
-                    // All Safe + All Caution tweaks + Ultimate Performance plan
                     foreach (var item in AllOptimizations.Where(x =>
                         x.Risk == RiskLevel.Safe ||
                         x.Risk == RiskLevel.Caution ||
                         x.Id == "uni_ultimate_performance_plan" ||
                         x.Id == "uni_disable_paging_executive"))
                     {
+                        if (Metrics.IsWindows11 && item.TargetOs == OsTarget.Windows10) continue;
+                        if (Metrics.IsWindows10 && item.TargetOs == OsTarget.Windows11) continue;
                         item.IsSelected = true;
                     }
                     AppendLog("Preset loaded: Maximum Strip tweaks selected.");
@@ -255,19 +319,19 @@ namespace ZenithOptimizer.ViewModels
 
                 case "DeselectAll":
                     foreach (var item in AllOptimizations) item.IsSelected = false;
-                    AppendLog("All optimizations deselected.");
+                    AppendLog("All tweaks deselected.");
                     break;
             }
         }
         #endregion
 
-        #region Action Execution
+        #region Batch Action Execution
         public async Task ApplySelectedAsync()
         {
             var targets = AllOptimizations.Where(x => x.IsSelected).ToList();
             if (targets.Count == 0)
             {
-                AppendLog("Notice: No optimizations selected. Use presets or check boxes to select tweaks.");
+                AppendLog("Notice: No tweaks selected. Use presets or checkboxes to select tweaks.");
                 return;
             }
 
@@ -290,17 +354,17 @@ namespace ZenithOptimizer.ViewModels
                         if (ok)
                         {
                             success++;
-                            AppendLog($"[SUCCESS] Applied: {item.Title}");
+                            AppendLog($"[SUCCESS] {item.Title}");
                             if (item.RequiresRestart) needsRestart = true;
                         }
                         else
                         {
-                            AppendLog($"[FAILED] Error applying: {item.Title}");
+                            AppendLog($"[FAILED] {item.Title}");
                         }
                     }
                     catch (Exception ex)
                     {
-                        AppendLog($"[ERROR] Exception on {item.Title}: {ex.Message}");
+                        AppendLog($"[ERROR] {item.Title}: {ex.Message}");
                     }
                     finally
                     {
@@ -311,7 +375,7 @@ namespace ZenithOptimizer.ViewModels
                 AppendLog($"--- Finished: {success}/{targets.Count} applied successfully ---");
                 if (needsRestart)
                 {
-                    AppendLog("[Notice] One or more tweaks recommend restarting File Explorer or your PC for full effect.");
+                    AppendLog("[Notice] One or more tweaks recommend restarting File Explorer to refresh interface elements.");
                 }
             });
 
@@ -325,7 +389,7 @@ namespace ZenithOptimizer.ViewModels
             var targets = AllOptimizations.Where(x => x.IsSelected).ToList();
             if (targets.Count == 0)
             {
-                AppendLog("Notice: No optimizations selected to revert.");
+                AppendLog("Notice: No tweaks selected to revert.");
                 return;
             }
 
@@ -346,16 +410,16 @@ namespace ZenithOptimizer.ViewModels
                         if (ok)
                         {
                             success++;
-                            AppendLog($"[REVERTED] Restored: {item.Title}");
+                            AppendLog($"[RESTORED] {item.Title}");
                         }
                         else
                         {
-                            AppendLog($"[FAILED] Error reverting: {item.Title}");
+                            AppendLog($"[FAILED] {item.Title}");
                         }
                     }
                     catch (Exception ex)
                     {
-                        AppendLog($"[ERROR] Exception on {item.Title}: {ex.Message}");
+                        AppendLog($"[ERROR] {item.Title}: {ex.Message}");
                     }
                     finally
                     {
@@ -377,36 +441,58 @@ namespace ZenithOptimizer.ViewModels
             BusyStatus = "Creating Windows System Restore Point...";
             AppendLog("[Restore] Initializing Windows System Restore Point snapshot...");
 
-            var (success, msg) = await SystemRestoreService.CreateRestorePointAsync("Zenith Optimizer Safe Snapshot");
+            var (success, msg) = await SystemRestoreService.CreateRestorePointAsync("Zenith Pre-Tweak Safety Point");
             if (success)
             {
+                Metrics.IsRestorePointCreated = true;
                 AppendLog($"[Restore SUCCESS] {msg}");
             }
             else
             {
-                AppendLog($"[Restore WARNING] {msg}");
+                AppendLog($"[Restore NOTICE] {msg}");
             }
 
             IsBusy = false;
             BusyStatus = string.Empty;
         }
 
+        public void SelectSafeDebloatOnly()
+        {
+            foreach (var cat in BloatwareCategories)
+            {
+                cat.IsSelected = cat.IsRecommended;
+            }
+            AppendLog("[Debloat] Selected Safe Consumer Bloatware (Games, News, Feedback, Media tools).");
+        }
+
+        public void SelectAllDebloat()
+        {
+            foreach (var cat in BloatwareCategories) cat.IsSelected = true;
+            AppendLog("[Debloat] Selected All Bloatware categories.");
+        }
+
+        public void DeselectAllDebloat()
+        {
+            foreach (var cat in BloatwareCategories) cat.IsSelected = false;
+            AppendLog("[Debloat] Deselected all bloatware categories.");
+        }
+
         public async Task RunDebloatPurgeAsync()
         {
-            var selected = BloatwareList.Where(x => x.IsSelected).ToList();
+            var selected = BloatwareCategories.Where(x => x.IsSelected).ToList();
             if (selected.Count == 0)
             {
-                AppendLog("Notice: No bloatware packages selected for removal.");
+                AppendLog("Notice: No bloatware categories selected.");
                 return;
             }
 
             IsBusy = true;
-            BusyStatus = "Removing selected UWP bloatware packages...";
-            AppendLog($"--- Starting UWP Bloatware Removal ({selected.Count} packages) ---");
+            BusyStatus = "Removing selected bloatware apps...";
+            AppendLog($"--- Purging Bloatware ({selected.Count} categories) ---");
 
-            var (removed, log) = await DebloatService.RemoveBloatwarePackagesAsync(selected);
+            var (removed, log) = await DebloatService.RemoveSelectedCategoriesAsync(selected);
             AppendLog(log);
-            AppendLog($"--- Finished: {removed} package variations removed ---");
+            AppendLog($"--- Finished: {removed} app packages uninstalled ---");
 
             IsBusy = false;
             BusyStatus = string.Empty;
@@ -415,13 +501,13 @@ namespace ZenithOptimizer.ViewModels
         public async Task RunCleanTempAsync()
         {
             IsBusy = true;
-            BusyStatus = "Cleaning temporary caches and files...";
+            BusyStatus = "Purging temporary cache and flushing DNS...";
             AppendLog("--- Purging Windows Temporary Caches & DNS ---");
 
             var (freed, log) = await DebloatService.CleanTemporaryFilesAsync();
             AppendLog(log);
             double mb = freed / (1024.0 * 1024.0);
-            AppendLog($"--- Cache Cleanup Complete: Freed {mb:F1} MB of disk space ---");
+            AppendLog($"--- Cache Cleanup Complete: Freed {mb:F1} MB of space ---");
 
             IsBusy = false;
             BusyStatus = string.Empty;

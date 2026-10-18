@@ -9,3 +9,5 @@ Publish/
 *.sln.docstates
 *.locked.*
 ZenithOptimizer_old.exe
+ZenithOptimizer.prev.exe
+*.locked*
