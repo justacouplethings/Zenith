@@ -156,19 +156,32 @@
 
                 <!-- Brand Logo & Identity -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <!-- App Mark Icon (Crisp purple squircle with geometric Z) -->
-                    <Border Width="34" Height="34" CornerRadius="8" Margin="0,0,12,0" VerticalAlignment="Center"
-                            ClipToBounds="True" Background="{DynamicResource AccentBrush}">
-                        <Grid>
-                            <Image x:Name="AppHeaderIcon" Width="34" Height="34" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
-                            <!-- Fallback geometric vector mark if image not loaded -->
-                            <Path x:Name="FallbackLogoMark"
-                                  Data="M 17,8 L 25,23 L 21,23 L 17,16 L 13,23 L 9,23 Z"
-                                  Fill="#FFFFFF"
-                                  HorizontalAlignment="Center"
-                                  VerticalAlignment="Center"
-                                  Visibility="Collapsed"/>
-                        </Grid>
+                    <!-- App Mark Icon (Crisp vector squircle with razor-sharp bold Z) -->
+                    <Border Width="34" Height="34" CornerRadius="9" Margin="0,0,12,0" VerticalAlignment="Center"
+                            SnapsToDevicePixels="True" UseLayoutRounding="True">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#9333EA" Offset="0.0"/>
+                                <GradientStop Color="#6D28D9" Offset="1.0"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <Border.BorderBrush>
+                            <SolidColorBrush Color="#C084FC" Opacity="0.5"/>
+                        </Border.BorderBrush>
+                        <Border BorderThickness="1" CornerRadius="9">
+                            <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock Text="Z" 
+                                           FontFamily="Segoe UI Variable Display, Segoe UI, sans-serif" 
+                                           FontWeight="Bold" 
+                                           FontSize="20" 
+                                           Foreground="#FFFFFF" 
+                                           HorizontalAlignment="Center" 
+                                           VerticalAlignment="Center" 
+                                           Margin="0,-1,0,0"
+                                           TextOptions.TextRenderingMode="ClearType"
+                                           TextOptions.TextFormattingMode="Display"/>
+                            </Grid>
+                        </Border>
                     </Border>
 
                     <StackPanel VerticalAlignment="Center">

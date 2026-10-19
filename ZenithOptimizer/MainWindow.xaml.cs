@@ -28,20 +28,20 @@ namespace ZenithOptimizer
                 string baseDir = AppDomain.CurrentDomain.BaseDirectory;
                 string? processDir = Path.GetDirectoryName(Environment.ProcessPath);
 
-                // 1. Setup crisp App Mark Icon (for window title bar, taskbar, and header squircle)
+                // 1. Setup crisp App Mark Icon (for window title bar and taskbar)
                 ImageSource? appIcon = null;
-                string[] iconCandidates = { "app.ico", "app_icon.png" };
+                string[] iconCandidates = { "app_icon.png", "app.ico" };
                 foreach (var candidate in iconCandidates)
                 {
                     string p1 = Path.Combine(baseDir, candidate);
                     string? p2 = processDir != null ? Path.Combine(processDir, candidate) : null;
-                    if (File.Exists(p1)) { appIcon = LoadBitmapSafely(p1); if (appIcon != null) break; }
-                    if (p2 != null && File.Exists(p2)) { appIcon = LoadBitmapSafely(p2); if (appIcon != null) break; }
+                    if (File.Exists(p1)) { appIcon = LoadIconFrameSafely(p1); if (appIcon != null) break; }
+                    if (p2 != null && File.Exists(p2)) { appIcon = LoadIconFrameSafely(p2); if (appIcon != null) break; }
                 }
 
                 if (appIcon == null)
                 {
-                    appIcon = LoadResourceBitmapSafely("app.ico") ?? LoadResourceBitmapSafely("app_icon.png");
+                    appIcon = LoadResourceBitmapSafely("app_icon.png") ?? LoadResourceBitmapSafely("app.ico");
                 }
 
                 if (appIcon == null)
@@ -52,15 +52,6 @@ namespace ZenithOptimizer
                 if (appIcon != null)
                 {
                     this.Icon = appIcon;
-                    if (AppHeaderIcon != null)
-                    {
-                        AppHeaderIcon.Source = appIcon;
-                        AppHeaderIcon.Visibility = Visibility.Visible;
-                    }
-                    if (FallbackLogoMark != null)
-                    {
-                        FallbackLogoMark.Visibility = Visibility.Collapsed;
-                    }
                 }
 
                 // 2. Setup Wordmark Logo ("Zenith." in purple)
@@ -145,6 +136,25 @@ namespace ZenithOptimizer
             catch
             {
                 return source;
+            }
+        }
+
+        private static ImageSource? LoadIconFrameSafely(string filePath)
+        {
+            try
+            {
+                if (!File.Exists(filePath)) return null;
+                if (filePath.EndsWith(".ico", StringComparison.OrdinalIgnoreCase))
+                {
+                    var uri = new Uri(filePath, UriKind.Absolute);
+                    var decoder = new IconBitmapDecoder(uri, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+                    return decoder.Frames.OrderByDescending(f => f.PixelWidth).FirstOrDefault();
+                }
+                return LoadBitmapSafely(filePath);
+            }
+            catch
+            {
+                return null;
             }
         }
 
