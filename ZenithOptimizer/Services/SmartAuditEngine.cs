@@ -80,11 +80,10 @@ namespace ZenithOptimizer.Services
             else
             {
                 recommended.Add("uni_disable_mouse_acceleration");
-                recommended.Add("uni_network_throttling");
                 recommended.Add("uni_tcp_tuning");
                 recommended.Add("uni_disable_gamedvr");
                 if (isWin11) recommended.Add("w11_vbs_hypervisor");
-                summary.AppendLine("✔ Desktop Gaming & Throughput: 1:1 Raw mouse tracking enforced; MMCSS network throttling bypassed; GameDVR latency killed.");
+                summary.AppendLine("✔ Desktop Gaming & Throughput: 1:1 Raw mouse tracking enforced; TCP auto-tuning optimized; GameDVR latency killed.");
             }
 
             // 5. Memory Capacity Check

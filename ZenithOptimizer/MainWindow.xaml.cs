@@ -353,6 +353,11 @@ namespace ZenithOptimizer
             ViewModel.RestartExplorer();
         }
 
+        private async void RepairNetwork_Click(object sender, RoutedEventArgs e)
+        {
+            await ViewModel.RunRepairNetworkAsync();
+        }
+
         private async void CleanTemp_Click(object sender, RoutedEventArgs e)
         {
             await ViewModel.RunCleanTempAsync();

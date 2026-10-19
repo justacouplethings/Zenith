@@ -862,10 +862,10 @@ namespace ZenithOptimizer.Services
                 Title = "Disable Network Throttling Index (MMCSS)",
                 Category = OptimizationCategory.GamingLatency,
                 TargetOs = OsTarget.Universal,
-                TargetDevice = DeviceTarget.Universal,
-                Risk = RiskLevel.Caution,
+                TargetDevice = DeviceTarget.DesktopOnly,
+                Risk = RiskLevel.Risky,
                 Description = "Disables Windows multimedia network packet throttling and maximizes responsiveness for competitive gaming.",
-                Tradeoff = "50/50: High-throughput network tuning. Safe for gaming PCs.",
+                Tradeoff = "RISKY: High-throughput Ethernet gaming PCs only. Can cause DNS packet drops or timeouts on Wi-Fi wireless adapters.",
                 RequiresRestart = false,
                 CheckAction = () =>
                 {
@@ -889,26 +889,31 @@ namespace ZenithOptimizer.Services
             list.Add(new OptimizationItem
             {
                 Id = "uni_tcp_tuning",
-                Title = "Optimize TCP Window Auto-Tuning & RSS",
+                Title = "Optimize TCP Window Auto-Tuning (Safe Baseline)",
                 Category = OptimizationCategory.GamingLatency,
                 TargetOs = OsTarget.Universal,
                 TargetDevice = DeviceTarget.Universal,
-                Risk = RiskLevel.Caution,
-                Description = "Enables TCP Receive Side Scaling (RSS) and sets TCP Auto-Tuning to Normal for lower packet jitter.",
-                Tradeoff = "50/50: Network stack optimization.",
+                Risk = RiskLevel.Safe,
+                Description = "Sets TCP Receive Window Auto-Tuning to Normal and enforces default Receive Side Scaling (RSS), preventing packet jitter without breaking Wi-Fi adapters.",
+                Tradeoff = "Enforces standard TCP window scaling. Safe for both Ethernet and Wi-Fi networks.",
                 RequiresRestart = false,
                 CheckAction = () =>
                 {
                     var (code, outStr, _) = ProcessHelper.RunCommand("netsh.exe", "int tcp show global");
-                    return outStr.Contains("Receive-Side Scaling State          : enabled") || outStr.Contains("autotuninglevel : normal");
+                    return outStr.Contains("autotuninglevel : normal");
                 },
                 ApplyAction = () =>
                 {
                     ProcessHelper.RunCommand("netsh.exe", "int tcp set global autotuninglevel=normal");
-                    ProcessHelper.RunCommand("netsh.exe", "int tcp set global rss=enabled");
+                    ProcessHelper.RunCommand("netsh.exe", "int tcp set global rss=default");
                     return true;
                 },
-                RevertAction = () => ProcessHelper.RunCommand("netsh.exe", "int tcp set global autotuninglevel=normal").ExitCode == 0
+                RevertAction = () =>
+                {
+                    ProcessHelper.RunCommand("netsh.exe", "int tcp set global autotuninglevel=normal");
+                    ProcessHelper.RunCommand("netsh.exe", "int tcp set global rss=default");
+                    return true;
+                }
             });
 
             list.Add(new OptimizationItem

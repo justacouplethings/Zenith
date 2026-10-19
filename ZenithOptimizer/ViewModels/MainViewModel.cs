@@ -411,7 +411,6 @@ namespace ZenithOptimizer.ViewModels
                     foreach (var item in AllOptimizations.Where(x =>
                         x.Risk == RiskLevel.Safe ||
                         x.Id == "uni_disable_gamedvr" ||
-                        x.Id == "uni_network_throttling" ||
                         x.Id == "uni_tcp_tuning" ||
                         x.Id == "uni_disable_sysmain" ||
                         x.Id == "w11_vbs_hypervisor"))
@@ -820,6 +819,75 @@ namespace ZenithOptimizer.ViewModels
             ResultBannerMessage = $"Successfully purged temporary caches and flushed DNS. Freed {mb:F1} MB of storage.";
             ShowResultBanner = true;
 
+            IsBusy = false;
+            BusyStatus = string.Empty;
+        }
+
+        public async Task RunRepairNetworkAsync()
+        {
+            IsBusy = true;
+            ShowResultBanner = false;
+            ExecutionErrors.Clear();
+            HasExecutionErrors = false;
+            ProgressTotal = 5;
+
+            ProgressCurrent = 1;
+            ProgressStepText = "1/5";
+            ProgressValue = 20.0;
+            CurrentOperationTitle = "Restoring TCP global parameters (AutoTuning=normal, RSS=default)...";
+            BusyStatus = "Restoring TCP global stack...";
+            AppendLog("--- Initiating Network & DNS Stack Restoration ---");
+
+            await Task.Delay(100);
+
+            ProgressCurrent = 2;
+            ProgressStepText = "2/5";
+            ProgressValue = 40.0;
+            CurrentOperationTitle = "Restoring MMCSS multimedia network throttling keys...";
+            BusyStatus = "Restoring MMCSS keys...";
+
+            await Task.Delay(100);
+
+            ProgressCurrent = 3;
+            ProgressStepText = "3/5";
+            ProgressValue = 60.0;
+            CurrentOperationTitle = "Verifying DNS, DHCP, NLA and IP Helper services...";
+            BusyStatus = "Verifying network services...";
+
+            var (ok, log) = await NetworkRepairService.RepairNetworkAndDnsAsync();
+            AppendLog(log);
+
+            ProgressCurrent = 4;
+            ProgressStepText = "4/5";
+            ProgressValue = 80.0;
+            CurrentOperationTitle = "Resetting Winsock catalog & TCP/IP stack...";
+            BusyStatus = "Resetting Winsock...";
+
+            await Task.Delay(100);
+
+            ProgressCurrent = 5;
+            ProgressStepText = "5/5";
+            ProgressValue = 100.0;
+            CurrentOperationTitle = "Flushing and re-registering DNS resolver...";
+            BusyStatus = "Flushing DNS resolver...";
+
+            await RefreshAllStates();
+
+            if (ok)
+            {
+                HasExecutionErrors = false;
+                ResultBannerTitle = "Network & DNS Stack Restored";
+                ResultBannerMessage = "Successfully reset TCP/IP stack to defaults, restored MMCSS keys, and started DNS/NLA services. Restart your browser or reconnect to Wi-Fi if needed.";
+            }
+            else
+            {
+                HasExecutionErrors = true;
+                ResultBannerTitle = "Network Repair Notice";
+                ResultBannerMessage = "Encountered an issue during network stack restoration. Check the log below for details.";
+                ExecutionErrors.Add("Failed to complete some network restoration steps.");
+            }
+
+            ShowResultBanner = true;
             IsBusy = false;
             BusyStatus = string.Empty;
         }

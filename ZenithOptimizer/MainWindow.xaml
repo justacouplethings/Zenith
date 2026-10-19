@@ -658,46 +658,65 @@
                             </Border>
                         </Grid>
 
-                        <!-- Quick Storage Reclaim Section -->
-                        <Grid>
+                        <!-- Quick Maintenance & Recovery Grid -->
+                        <Grid Margin="0,0,0,10">
                             <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
                             <Border Grid.Column="0" Style="{StaticResource AppleCardStyle}" Margin="0,0,6,0">
                                 <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel>
-                                        <TextBlock Text="Purge System Temp Caches &amp; Flush DNS" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                        <TextBlock Text="Safely cleans Windows Temp, User Temp, Prefetch, and flushes network DNS cache." FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,3,0,0"/>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <StackPanel Margin="0,0,0,10">
+                                        <TextBlock Text="🌐 Network &amp; DNS Doctor" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                        <TextBlock Text="Instantly resets TCP global stack (RSS/autotuning), MMCSS keys, restarts DNS/NLA services, and flushes Winsock to fix browser DNS errors."
+                                                   FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" LineHeight="15" Margin="0,4,0,0"/>
                                     </StackPanel>
-                                    <Button Grid.Column="1"
-                                            Content="Purge Now"
-                                            Click="CleanTemp_Click"
-                                            Style="{StaticResource AppleSecondaryButton}"
-                                            VerticalAlignment="Center"/>
+                                    <Button Grid.Row="1"
+                                            Content="Repair Network &amp; DNS"
+                                            Click="RepairNetwork_Click"
+                                            Style="{StaticResource AppleButton}"/>
                                 </Grid>
                             </Border>
 
-                            <Border Grid.Column="1" Style="{StaticResource AppleCardStyle}" Margin="6,0,0,0">
+                            <Border Grid.Column="1" Style="{StaticResource AppleCardStyle}" Margin="3,0,3,0">
                                 <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel>
-                                        <TextBlock Text="Reclaim SSD Storage (Disable Hibernation)" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                        <TextBlock Text="Deletes hiberfil.sys to immediately free 8GB to 32GB of SSD disk space." FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,3,0,0"/>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <StackPanel Margin="0,0,0,10">
+                                        <TextBlock Text="🧹 Purge System Temp &amp; Cache" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                        <TextBlock Text="Cleans Windows Temp, User Temp, Prefetch, and flushes network DNS resolver cache."
+                                                   FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" LineHeight="15" Margin="0,4,0,0"/>
                                     </StackPanel>
-                                    <Button Grid.Column="1"
-                                            Content="Free Storage"
+                                    <Button Grid.Row="1"
+                                            Content="Purge Temp Files"
+                                            Click="CleanTemp_Click"
+                                            Style="{StaticResource AppleSecondaryButton}"/>
+                                </Grid>
+                            </Border>
+
+                            <Border Grid.Column="2" Style="{StaticResource AppleCardStyle}" Margin="6,0,0,0">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <StackPanel Margin="0,0,0,10">
+                                        <TextBlock Text="💾 Reclaim Hibernation Space" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                        <TextBlock Text="Purges hiberfil.sys to immediately reclaim 8GB to 32GB of NVMe/SSD disk capacity."
+                                                   FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" LineHeight="15" Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                    <Button Grid.Row="1"
+                                            Content="Free SSD Space"
                                             Click="FreeStorage_Click"
-                                            Style="{StaticResource AppleSecondaryButton}"
-                                            VerticalAlignment="Center"/>
+                                            Style="{StaticResource AppleSecondaryButton}"/>
                                 </Grid>
                             </Border>
                         </Grid>
