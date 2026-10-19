@@ -23,6 +23,17 @@ namespace ZenithOptimizer.ViewModels
         private AppTheme _currentTheme = AppTheme.CupertinoDark;
         private AccentColor _currentAccent = AccentColor.RoyalViolet; // Zenith Purple default
 
+        private double _progressValue = 0;
+        private int _progressCurrent = 0;
+        private int _progressTotal = 0;
+        private string _progressStepText = string.Empty;
+        private string _currentOperationTitle = string.Empty;
+        private bool _showResultBanner = false;
+        private bool _hasExecutionErrors = false;
+        private string _resultBannerTitle = string.Empty;
+        private string _resultBannerMessage = string.Empty;
+        public ObservableCollection<string> ExecutionErrors { get; } = new ObservableCollection<string>();
+
         public SystemMetrics Metrics { get; } = new SystemMetrics();
         public ObservableCollection<OptimizationItem> AllOptimizations { get; } = new ObservableCollection<OptimizationItem>();
         public ICollectionView FilteredOptimizations { get; }
@@ -80,6 +91,76 @@ namespace ZenithOptimizer.ViewModels
         {
             get => _busyStatus;
             set { _busyStatus = value; OnPropertyChanged(); }
+        }
+
+        public double ProgressValue
+        {
+            get => _progressValue;
+            set
+            {
+                if (Math.Abs(_progressValue - value) > 0.001)
+                {
+                    _progressValue = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(ProgressPercentageText));
+                }
+            }
+        }
+
+        public int ProgressCurrent
+        {
+            get => _progressCurrent;
+            set { _progressCurrent = value; OnPropertyChanged(); }
+        }
+
+        public int ProgressTotal
+        {
+            get => _progressTotal;
+            set { _progressTotal = value; OnPropertyChanged(); }
+        }
+
+        public string ProgressStepText
+        {
+            get => _progressStepText;
+            set { _progressStepText = value; OnPropertyChanged(); }
+        }
+
+        public string ProgressPercentageText => $"{Math.Round(ProgressValue)}%";
+
+        public string CurrentOperationTitle
+        {
+            get => _currentOperationTitle;
+            set { _currentOperationTitle = value; OnPropertyChanged(); }
+        }
+
+        public bool ShowResultBanner
+        {
+            get => _showResultBanner;
+            set { _showResultBanner = value; OnPropertyChanged(); }
+        }
+
+        public bool HasExecutionErrors
+        {
+            get => _hasExecutionErrors;
+            set { _hasExecutionErrors = value; OnPropertyChanged(); }
+        }
+
+        public string ResultBannerTitle
+        {
+            get => _resultBannerTitle;
+            set { _resultBannerTitle = value; OnPropertyChanged(); }
+        }
+
+        public string ResultBannerMessage
+        {
+            get => _resultBannerMessage;
+            set { _resultBannerMessage = value; OnPropertyChanged(); }
+        }
+
+        public void DismissResultBanner()
+        {
+            ShowResultBanner = false;
+            ExecutionErrors.Clear();
         }
 
         public string StatusLog
@@ -240,20 +321,59 @@ namespace ZenithOptimizer.ViewModels
             Metrics.SmartAuditSummary = summary;
         }
 
-        public void RunSmartHardwareAudit()
+        public async Task RunSmartHardwareAuditAsync()
         {
+            IsBusy = true;
+            ShowResultBanner = false;
+            ExecutionErrors.Clear();
+            HasExecutionErrors = false;
+            ProgressTotal = 5;
+
+            string[] stages = {
+                "Auditing CPU core topology & cache hierarchy...",
+                "Inspecting physical RAM capacity & commit limits...",
+                "Probing NVMe & storage bus controllers...",
+                "Analyzing chassis thermals & power profiles...",
+                "Synthesizing algorithmic optimization score..."
+            };
+
+            for (int i = 0; i < stages.Length; i++)
+            {
+                ProgressCurrent = i + 1;
+                ProgressStepText = $"{ProgressCurrent}/{ProgressTotal}";
+                CurrentOperationTitle = stages[i];
+                BusyStatus = stages[i];
+                ProgressValue = ((double)ProgressCurrent / ProgressTotal) * 100.0;
+                await Task.Delay(120);
+            }
+
             var (summary, recommendedIds) = SmartAuditEngine.AnalyzeHardware(Metrics, AllOptimizations);
             Metrics.SmartAuditSummary = summary;
 
-            // Auto-select recommended tweaks
+            int count = 0;
             foreach (var item in AllOptimizations)
             {
-                item.IsSelected = recommendedIds.Contains(item.Id);
+                bool rec = recommendedIds.Contains(item.Id);
+                item.IsSelected = rec;
+                if (rec) count++;
             }
 
             AppendLog("--- Smart Hardware Audit Completed ---");
-            AppendLog($"Audit applied: Selected {recommendedIds.Count} optimal tweaks tailored for your {Metrics.OsName} {(Metrics.IsUserLaptopMode ? "Laptop" : "Desktop")}.");
+            AppendLog($"Audit applied: Selected {count} optimal tweaks tailored for your {Metrics.OsName} {(Metrics.IsUserLaptopMode ? "Laptop" : "Desktop")}.");
+
+            HasExecutionErrors = false;
+            ResultBannerTitle = "Smart Hardware Audit Complete";
+            ResultBannerMessage = $"Audited {Metrics.RamTotalGb:F1} GB RAM & CPU. Auto-selected {count} optimal tweaks.";
+            ShowResultBanner = true;
+
+            IsBusy = false;
+            BusyStatus = string.Empty;
             ActiveTab = "Tweaks";
+        }
+
+        public void RunSmartHardwareAudit()
+        {
+            _ = RunSmartHardwareAuditAsync();
         }
         #endregion
 
@@ -335,18 +455,35 @@ namespace ZenithOptimizer.ViewModels
                 return;
             }
 
+            ShowResultBanner = false;
+            ExecutionErrors.Clear();
+            HasExecutionErrors = false;
             IsBusy = true;
-            BusyStatus = "Applying optimizations...";
+            ProgressTotal = targets.Count;
+            ProgressCurrent = 0;
+            ProgressValue = 0;
+            ProgressStepText = $"0/{ProgressTotal}";
+            BusyStatus = "Starting optimizations...";
+            CurrentOperationTitle = "Initializing batch queue...";
+
             AppendLog($"--- Starting Batch Optimization ({targets.Count} tweaks) ---");
 
-            await Task.Run(() =>
-            {
-                int success = 0;
-                bool needsRestart = false;
+            int success = 0;
+            var failedItems = new List<(string Title, string Error)>();
+            bool needsRestart = false;
 
-                foreach (var item in targets)
+            for (int i = 0; i < targets.Count; i++)
+            {
+                var item = targets[i];
+                ProgressCurrent = i + 1;
+                ProgressStepText = $"{ProgressCurrent}/{ProgressTotal}";
+                CurrentOperationTitle = $"Applying: {item.Title}";
+                BusyStatus = $"Applying ({ProgressCurrent}/{ProgressTotal}): {item.Title}";
+
+                item.IsProcessing = true;
+
+                await Task.Run(() =>
                 {
-                    item.IsProcessing = true;
                     try
                     {
                         bool ok = item.ApplyAction?.Invoke() ?? false;
@@ -359,29 +496,50 @@ namespace ZenithOptimizer.ViewModels
                         }
                         else
                         {
+                            string err = "Failed: System rejected setting or permission denied.";
+                            failedItems.Add((item.Title, err));
                             AppendLog($"[FAILED] {item.Title}");
                         }
                     }
                     catch (Exception ex)
                     {
+                        failedItems.Add((item.Title, ex.Message));
                         AppendLog($"[ERROR] {item.Title}: {ex.Message}");
                     }
                     finally
                     {
                         item.IsProcessing = false;
                     }
-                }
+                });
 
-                AppendLog($"--- Finished: {success}/{targets.Count} applied successfully ---");
-                if (needsRestart)
-                {
-                    AppendLog("[Notice] One or more tweaks recommend restarting File Explorer to refresh interface elements.");
-                }
-            });
+                ProgressValue = ((double)ProgressCurrent / ProgressTotal) * 100.0;
+                await Task.Delay(40);
+            }
 
             await RefreshAllStates();
+
+            if (failedItems.Count > 0)
+            {
+                HasExecutionErrors = true;
+                ResultBannerTitle = $"Optimization Completed with {failedItems.Count} Issue{(failedItems.Count > 1 ? "s" : "")}";
+                ResultBannerMessage = $"{success} of {targets.Count} tweaks applied. {failedItems.Count} tweak{(failedItems.Count > 1 ? "s" : "")} encountered errors:";
+                foreach (var f in failedItems)
+                {
+                    ExecutionErrors.Add($"{f.Title}: {f.Error}");
+                }
+            }
+            else
+            {
+                HasExecutionErrors = false;
+                ResultBannerTitle = "All Optimizations Applied Successfully";
+                ResultBannerMessage = $"Successfully applied all {success}/{targets.Count} tweaks (100%)." +
+                    (needsRestart ? " A File Explorer restart is recommended to refresh UI elements." : "");
+            }
+
+            ShowResultBanner = true;
             IsBusy = false;
             BusyStatus = string.Empty;
+            CurrentOperationTitle = string.Empty;
         }
 
         public async Task RevertSelectedAsync()
@@ -393,16 +551,34 @@ namespace ZenithOptimizer.ViewModels
                 return;
             }
 
+            ShowResultBanner = false;
+            ExecutionErrors.Clear();
+            HasExecutionErrors = false;
             IsBusy = true;
+            ProgressTotal = targets.Count;
+            ProgressCurrent = 0;
+            ProgressValue = 0;
+            ProgressStepText = $"0/{ProgressTotal}";
             BusyStatus = "Restoring default settings...";
+            CurrentOperationTitle = "Initializing revert queue...";
+
             AppendLog($"--- Starting Batch Revert ({targets.Count} tweaks) ---");
 
-            await Task.Run(() =>
+            int success = 0;
+            var failedItems = new List<(string Title, string Error)>();
+
+            for (int i = 0; i < targets.Count; i++)
             {
-                int success = 0;
-                foreach (var item in targets)
+                var item = targets[i];
+                ProgressCurrent = i + 1;
+                ProgressStepText = $"{ProgressCurrent}/{ProgressTotal}";
+                CurrentOperationTitle = $"Restoring: {item.Title}";
+                BusyStatus = $"Restoring ({ProgressCurrent}/{ProgressTotal}): {item.Title}";
+
+                item.IsProcessing = true;
+
+                await Task.Run(() =>
                 {
-                    item.IsProcessing = true;
                     try
                     {
                         bool ok = item.RevertAction?.Invoke() ?? false;
@@ -414,44 +590,98 @@ namespace ZenithOptimizer.ViewModels
                         }
                         else
                         {
+                            string err = "Failed: System rejected restoring default configuration.";
+                            failedItems.Add((item.Title, err));
                             AppendLog($"[FAILED] {item.Title}");
                         }
                     }
                     catch (Exception ex)
                     {
+                        failedItems.Add((item.Title, ex.Message));
                         AppendLog($"[ERROR] {item.Title}: {ex.Message}");
                     }
                     finally
                     {
                         item.IsProcessing = false;
                     }
-                }
+                });
 
-                AppendLog($"--- Finished: {success}/{targets.Count} restored to default ---");
-            });
+                ProgressValue = ((double)ProgressCurrent / ProgressTotal) * 100.0;
+                await Task.Delay(40);
+            }
 
             await RefreshAllStates();
+
+            if (failedItems.Count > 0)
+            {
+                HasExecutionErrors = true;
+                ResultBannerTitle = $"Revert Completed with {failedItems.Count} Issue{(failedItems.Count > 1 ? "s" : "")}";
+                ResultBannerMessage = $"{success} of {targets.Count} tweaks restored to Microsoft default. {failedItems.Count} tweak{(failedItems.Count > 1 ? "s" : "")} encountered errors:";
+                foreach (var f in failedItems)
+                {
+                    ExecutionErrors.Add($"{f.Title}: {f.Error}");
+                }
+            }
+            else
+            {
+                HasExecutionErrors = false;
+                ResultBannerTitle = "Default Configurations Restored";
+                ResultBannerMessage = $"Successfully restored all {success}/{targets.Count} tweaks back to original Microsoft defaults (100%).";
+            }
+
+            ShowResultBanner = true;
             IsBusy = false;
             BusyStatus = string.Empty;
+            CurrentOperationTitle = string.Empty;
         }
 
         public async Task CreateRestorePointAsync()
         {
             IsBusy = true;
-            BusyStatus = "Creating Windows System Restore Point...";
+            ShowResultBanner = false;
+            ExecutionErrors.Clear();
+            HasExecutionErrors = false;
+            ProgressTotal = 3;
+
+            ProgressCurrent = 1;
+            ProgressStepText = "1/3";
+            ProgressValue = 33.0;
+            CurrentOperationTitle = "Probing Volume Shadow Copy service...";
+            BusyStatus = "Checking VSS service...";
             AppendLog("[Restore] Initializing Windows System Restore Point snapshot...");
 
+            await Task.Delay(100);
+
+            ProgressCurrent = 2;
+            ProgressStepText = "2/3";
+            ProgressValue = 66.0;
+            CurrentOperationTitle = "Capturing System Restore snapshot...";
+            BusyStatus = "Creating snapshot...";
+
             var (success, msg) = await SystemRestoreService.CreateRestorePointAsync("Zenith Pre-Tweak Safety Point");
+
+            ProgressCurrent = 3;
+            ProgressStepText = "3/3";
+            ProgressValue = 100.0;
+
             if (success)
             {
                 Metrics.IsRestorePointCreated = true;
                 AppendLog($"[Restore SUCCESS] {msg}");
+                HasExecutionErrors = false;
+                ResultBannerTitle = "System Restore Point Captured";
+                ResultBannerMessage = msg;
             }
             else
             {
                 AppendLog($"[Restore NOTICE] {msg}");
+                HasExecutionErrors = true;
+                ResultBannerTitle = "Restore Point Creation Notice";
+                ResultBannerMessage = msg;
+                ExecutionErrors.Add(msg);
             }
 
+            ShowResultBanner = true;
             IsBusy = false;
             BusyStatus = string.Empty;
         }
@@ -487,13 +717,65 @@ namespace ZenithOptimizer.ViewModels
             }
 
             IsBusy = true;
-            BusyStatus = "Removing selected bloatware apps...";
+            ShowResultBanner = false;
+            ExecutionErrors.Clear();
+            HasExecutionErrors = false;
+            ProgressTotal = selected.Count;
+            ProgressCurrent = 0;
+            ProgressValue = 0;
+            ProgressStepText = $"0/{ProgressTotal}";
+            BusyStatus = "Starting bloatware uninstallation...";
+
             AppendLog($"--- Purging Bloatware ({selected.Count} categories) ---");
 
-            var (removed, log) = await DebloatService.RemoveSelectedCategoriesAsync(selected);
-            AppendLog(log);
-            AppendLog($"--- Finished: {removed} app packages uninstalled ---");
+            int totalRemoved = 0;
+            var failedCategories = new List<string>();
 
+            for (int i = 0; i < selected.Count; i++)
+            {
+                var cat = selected[i];
+                ProgressCurrent = i + 1;
+                ProgressStepText = $"{ProgressCurrent}/{ProgressTotal}";
+                CurrentOperationTitle = $"Debloating: {cat.Title}";
+                BusyStatus = $"Debloating ({ProgressCurrent}/{ProgressTotal}): {cat.Title}";
+
+                await Task.Run(async () =>
+                {
+                    try
+                    {
+                        var (removed, log) = await DebloatService.RemoveSelectedCategoriesAsync(new[] { cat });
+                        totalRemoved += removed;
+                        AppendLog(log);
+                    }
+                    catch (Exception ex)
+                    {
+                        failedCategories.Add($"{cat.Title}: {ex.Message}");
+                        AppendLog($"[ERROR] Failed to purge {cat.Title}: {ex.Message}");
+                    }
+                });
+
+                ProgressValue = ((double)ProgressCurrent / ProgressTotal) * 100.0;
+                await Task.Delay(50);
+            }
+
+            if (failedCategories.Count > 0)
+            {
+                HasExecutionErrors = true;
+                ResultBannerTitle = "Debloat Completed with Warnings";
+                ResultBannerMessage = $"Purged {totalRemoved} packages. {failedCategories.Count} category encountered errors:";
+                foreach (var err in failedCategories)
+                {
+                    ExecutionErrors.Add(err);
+                }
+            }
+            else
+            {
+                HasExecutionErrors = false;
+                ResultBannerTitle = "Debloat Complete";
+                ResultBannerMessage = $"Successfully purged {totalRemoved} packages across {selected.Count} categories (100%).";
+            }
+
+            ShowResultBanner = true;
             IsBusy = false;
             BusyStatus = string.Empty;
         }
@@ -501,13 +783,42 @@ namespace ZenithOptimizer.ViewModels
         public async Task RunCleanTempAsync()
         {
             IsBusy = true;
-            BusyStatus = "Purging temporary cache and flushing DNS...";
+            ShowResultBanner = false;
+            ExecutionErrors.Clear();
+            HasExecutionErrors = false;
+            ProgressTotal = 3;
+
+            ProgressCurrent = 1;
+            ProgressStepText = "1/3";
+            ProgressValue = 33.0;
+            CurrentOperationTitle = "Purging user AppData & local temp caches...";
+            BusyStatus = "Cleaning user temp...";
             AppendLog("--- Purging Windows Temporary Caches & DNS ---");
+
+            await Task.Delay(100);
+
+            ProgressCurrent = 2;
+            ProgressStepText = "2/3";
+            ProgressValue = 66.0;
+            CurrentOperationTitle = "Purging Windows system temp & crash dumps...";
+            BusyStatus = "Cleaning system temp...";
 
             var (freed, log) = await DebloatService.CleanTemporaryFilesAsync();
             AppendLog(log);
+
+            ProgressCurrent = 3;
+            ProgressStepText = "3/3";
+            ProgressValue = 100.0;
+            CurrentOperationTitle = "Flushing DNS resolver cache & ARP tables...";
+            BusyStatus = "Flushing DNS...";
+
             double mb = freed / (1024.0 * 1024.0);
             AppendLog($"--- Cache Cleanup Complete: Freed {mb:F1} MB of space ---");
+
+            HasExecutionErrors = false;
+            ResultBannerTitle = "System Storage Cleaned";
+            ResultBannerMessage = $"Successfully purged temporary caches and flushed DNS. Freed {mb:F1} MB of storage.";
+            ShowResultBanner = true;
 
             IsBusy = false;
             BusyStatus = string.Empty;

@@ -1,9 +1,11 @@
 using System;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using ZenithOptimizer.Models;
 using ZenithOptimizer.Services;
@@ -19,6 +21,39 @@ namespace ZenithOptimizer
         {
             InitializeComponent();
             InitializeBranding();
+
+            Loaded += (s, e) =>
+            {
+                if (DataContext is MainViewModel vm)
+                {
+                    vm.PropertyChanged += ViewModel_PropertyChanged;
+                }
+            };
+        }
+
+        private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(MainViewModel.ProgressValue))
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    if (AnimatedProgressSlider != null)
+                    {
+                        var anim = new DoubleAnimation
+                        {
+                            To = ViewModel.ProgressValue,
+                            Duration = TimeSpan.FromMilliseconds(280),
+                            EasingFunction = new QuarticEase { EasingMode = EasingMode.EaseOut }
+                        };
+                        AnimatedProgressSlider.BeginAnimation(System.Windows.Controls.Primitives.RangeBase.ValueProperty, anim);
+                    }
+                });
+            }
+        }
+
+        private void DismissBanner_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.DismissResultBanner();
         }
 
         private void InitializeBranding()
@@ -256,9 +291,9 @@ namespace ZenithOptimizer
         #endregion
 
         #region Smart Audit
-        private void RunSmartAudit_Click(object sender, RoutedEventArgs e)
+        private async void RunSmartAudit_Click(object sender, RoutedEventArgs e)
         {
-            ViewModel.RunSmartHardwareAudit();
+            await ViewModel.RunSmartHardwareAuditAsync();
         }
         #endregion
 
@@ -397,14 +432,37 @@ namespace ZenithOptimizer
                 {
                     bool ok = item.ApplyAction?.Invoke() ?? false;
                     item.RefreshStatus();
-                    ViewModel.AppendLog(ok ? $"[SUCCESS] {item.Title}" : $"[FAILED] Could not apply {item.Title}");
-                    if (item.RequiresRestart)
+                    if (ok)
                     {
-                        ViewModel.AppendLog($"[Notice] {item.Title} recommends restarting File Explorer or system.");
+                        ViewModel.HasExecutionErrors = false;
+                        ViewModel.ResultBannerTitle = "Optimization Applied";
+                        ViewModel.ResultBannerMessage = $"Successfully applied '{item.Title}'.";
+                        ViewModel.ShowResultBanner = true;
+                        ViewModel.AppendLog($"[SUCCESS] {item.Title}");
+                        if (item.RequiresRestart)
+                        {
+                            ViewModel.AppendLog($"[Notice] {item.Title} recommends restarting File Explorer or system.");
+                        }
+                    }
+                    else
+                    {
+                        ViewModel.HasExecutionErrors = true;
+                        ViewModel.ResultBannerTitle = "Optimization Failed";
+                        ViewModel.ResultBannerMessage = $"Could not apply '{item.Title}'. System rejected setting or permission denied.";
+                        ViewModel.ExecutionErrors.Clear();
+                        ViewModel.ExecutionErrors.Add($"Error applying {item.Title}: Access Denied or policy restriction.");
+                        ViewModel.ShowResultBanner = true;
+                        ViewModel.AppendLog($"[FAILED] Could not apply {item.Title}");
                     }
                 }
                 catch (Exception ex)
                 {
+                    ViewModel.HasExecutionErrors = true;
+                    ViewModel.ResultBannerTitle = "Optimization Error";
+                    ViewModel.ResultBannerMessage = $"Exception applying '{item.Title}'.";
+                    ViewModel.ExecutionErrors.Clear();
+                    ViewModel.ExecutionErrors.Add($"{item.Title}: {ex.Message}");
+                    ViewModel.ShowResultBanner = true;
                     ViewModel.AppendLog($"[ERROR] {ex.Message}");
                 }
                 finally
@@ -424,10 +482,33 @@ namespace ZenithOptimizer
                 {
                     bool ok = item.RevertAction?.Invoke() ?? false;
                     item.RefreshStatus();
-                    ViewModel.AppendLog(ok ? $"[RESTORED] {item.Title}" : $"[FAILED] Could not revert {item.Title}");
+                    if (ok)
+                    {
+                        ViewModel.HasExecutionErrors = false;
+                        ViewModel.ResultBannerTitle = "Setting Restored";
+                        ViewModel.ResultBannerMessage = $"Successfully restored '{item.Title}' back to Microsoft default.";
+                        ViewModel.ShowResultBanner = true;
+                        ViewModel.AppendLog($"[RESTORED] {item.Title}");
+                    }
+                    else
+                    {
+                        ViewModel.HasExecutionErrors = true;
+                        ViewModel.ResultBannerTitle = "Restore Failed";
+                        ViewModel.ResultBannerMessage = $"Could not restore '{item.Title}' to default.";
+                        ViewModel.ExecutionErrors.Clear();
+                        ViewModel.ExecutionErrors.Add($"Error restoring {item.Title}: Access Denied.");
+                        ViewModel.ShowResultBanner = true;
+                        ViewModel.AppendLog($"[FAILED] Could not revert {item.Title}");
+                    }
                 }
                 catch (Exception ex)
                 {
+                    ViewModel.HasExecutionErrors = true;
+                    ViewModel.ResultBannerTitle = "Restore Error";
+                    ViewModel.ResultBannerMessage = $"Exception restoring '{item.Title}'.";
+                    ViewModel.ExecutionErrors.Clear();
+                    ViewModel.ExecutionErrors.Add($"{item.Title}: {ex.Message}");
+                    ViewModel.ShowResultBanner = true;
                     ViewModel.AppendLog($"[ERROR] {ex.Message}");
                 }
                 finally

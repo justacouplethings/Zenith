@@ -120,6 +120,39 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- High-Impact Smooth Purple Progress Bar Style -->
+        <Style x:Key="SmoothPurpleProgressBarStyle" TargetType="ProgressBar">
+            <Setter Property="Background" Value="{DynamicResource SegmentedTabBgBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Height" Value="8"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ProgressBar">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4"
+                                ClipToBounds="True">
+                            <Grid x:Name="PART_Track">
+                                <Border x:Name="PART_Indicator"
+                                        HorizontalAlignment="Left"
+                                        CornerRadius="3">
+                                    <Border.Background>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                            <GradientStop Color="#C084FC" Offset="0.0"/>
+                                            <GradientStop Color="#9333EA" Offset="0.5"/>
+                                            <GradientStop Color="#7C3AED" Offset="1.0"/>
+                                        </LinearGradientBrush>
+                                    </Border.Background>
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Window.DataContext>
@@ -1167,30 +1200,140 @@
             </Grid>
         </Grid>
 
-        <!-- ==================== BUSY / PROGRESS BAR OVERLAY ==================== -->
+        <!-- ==================== BUSY / SMOOTH ANIMATED PROGRESS BAR OVERLAY ==================== -->
         <Border Grid.Row="3"
                 Background="{DynamicResource CardBrush}"
                 BorderBrush="{DynamicResource CardBorderBrush}"
                 BorderThickness="0,1,0,0"
-                Padding="20,10"
+                Padding="24,14"
                 Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Status Header: Operation, Step Count (e.g. 1/8) & Percentage -->
+                <Grid Grid.Row="0" Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Left: Purple Pulse Dot & Active Operation -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Width="8" Height="8" CornerRadius="4" Background="#9333EA" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding CurrentOperationTitle}"
+                                   FontWeight="SemiBold"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   TextTrimming="CharacterEllipsis"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <!-- Right: Step Count (e.g. 1/8) & Percentage -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Background="{DynamicResource AccentBrushLight}" CornerRadius="6" Padding="8,2" Margin="0,0,8,0">
+                            <TextBlock Text="{Binding ProgressStepText}"
+                                       FontWeight="Bold"
+                                       FontSize="11"
+                                       Foreground="{DynamicResource AccentBrush}"/>
+                        </Border>
+                        <TextBlock Text="{Binding ProgressPercentageText}"
+                                   FontWeight="Bold"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Progress Bar: Smooth Purple Slider -->
+                <ProgressBar Grid.Row="1"
+                             x:Name="AnimatedProgressSlider"
+                             Height="8"
+                             Minimum="0"
+                             Maximum="100"
+                             Value="{Binding ProgressValue, Mode=OneWay}"
+                             Style="{StaticResource SmoothPurpleProgressBarStyle}"/>
+            </Grid>
+        </Border>
+
+        <!-- ==================== EXECUTION RESULT & ERROR BANNER ==================== -->
+        <Border Grid.Row="3"
+                Background="{DynamicResource CardBrush}"
+                BorderBrush="{DynamicResource CardBorderBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="24,12"
+                Visibility="{Binding ShowResultBanner, Converter={StaticResource BooleanToVisibilityConverter}}">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <ProgressBar Grid.Column="0"
-                             IsIndeterminate="True"
-                             Width="160" Height="4"
-                             Style="{StaticResource MetricProgressStyle}"
-                             VerticalAlignment="Center"
-                             Margin="0,0,16,0"/>
-                <TextBlock Grid.Column="1"
-                           Text="{Binding BusyStatus}"
-                           FontSize="12"
-                           FontWeight="SemiBold"
-                           Foreground="{DynamicResource AccentBrush}"
-                           VerticalAlignment="Center"/>
+
+                <!-- Status Icon Badge (Green Check or Amber/Red Warning) -->
+                <Border Grid.Column="0"
+                        Width="32" Height="32"
+                        CornerRadius="16"
+                        Margin="0,0,12,0"
+                        VerticalAlignment="Top">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="#2010B981"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasExecutionErrors}" Value="True">
+                                    <Setter Property="Background" Value="#25EF4444"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <TextBlock FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Text" Value="✔"/>
+                                <Setter Property="Foreground" Value="#10B981"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasExecutionErrors}" Value="True">
+                                        <Setter Property="Text" Value="⚠"/>
+                                        <Setter Property="Foreground" Value="#EF4444"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Border>
+
+                <!-- Content & Failure Breakdown -->
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding ResultBannerTitle}"
+                               FontWeight="Bold"
+                               FontSize="13"
+                               Foreground="{DynamicResource TextPrimaryBrush}"/>
+                    <TextBlock Text="{Binding ResultBannerMessage}"
+                               FontSize="11"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               Margin="0,2,0,0"/>
+
+                    <!-- Failed Items Detail List -->
+                    <ItemsControl ItemsSource="{Binding ExecutionErrors}" Margin="0,6,0,0">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="#15EF4444" BorderBrush="#30EF4444" BorderThickness="1" CornerRadius="4" Padding="8,4" Margin="0,2">
+                                    <TextBlock Text="{Binding}" FontSize="11" Foreground="#F87171" TextWrapping="Wrap"/>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
+                <!-- Action Button -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
+                    <Button Content="Dismiss"
+                            Padding="12,6"
+                            Click="DismissBanner_Click"
+                            Style="{StaticResource AppleSecondaryButton}"/>
+                </StackPanel>
             </Grid>
         </Border>
     </Grid>
